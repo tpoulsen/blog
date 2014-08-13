@@ -1,5 +1,5 @@
-Migrating from Flask to Scotty
-Or: Rewriting a Python web application in Haskell
+#Migrating from Flask to Scotty
+###Or: Rewriting a Python web application in Haskell
 
 A few months ago, I wrote a program to scale recipes based on the given serving size and the desired serving size.
 
