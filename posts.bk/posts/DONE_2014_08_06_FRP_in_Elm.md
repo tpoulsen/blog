@@ -1,0 +1,112 @@
+#Making Games Part 1
+##*Thomas Was a Clone*
+
+This is the first in what will be a multi-part series describing my recent games development projects. There are likely things that don't follow best practices. There are likely better abstractions that could be implemented. This first project started as a learning-by-doing exercise with a lot of REPL tinkering and constant iteration to make something work. It was my first attempt at developing a non-console only game. In the projects that are to be the subject of later updates I've gone into them with a plan in place from the beginning and as a result, the code is better. This is meant to be less a *how-to* than a *how-I-did-it*.
+
+**TLDR** - <a href="http://www.travispoulsen.com/thomasWasAClone.html">Play it here!</a>
+
+###FRP
+To provide something of a circular definition, Functional Reactive Programming is reactive programming using a functional language. A typical example of reactive programming is the way cells in spreadsheet applications update when cells that they are linked to are updated (*e.g.* ```Cell C = Cell A + Cell B``` When the values in either cell A or cell B, the value in cell C will *react* to those changes and update itself to the new value).
+
+FRP allows one to write functional, high-level code that reacts to inputs that change over time (*e.g* time itself, key-presses, or mouse-clicks). These events are typically referred to as **Signals**. This allows one to write pure functions that can be lifted to work on and return Signals themselves.
+
+###Elm
+<a href="http://elm-lang.org/">Elm</a> is a functional language designed for creating reactive applications in the browser (it compiles to HTML, CSS, and Javascript). Its design and syntax were influenced by Haskell, OCaml, SML, and F#. In Elm, functions are pure and values immutable, but lifting functions to work on Signals returns copies of the values with the applicable parts updated in response to changes in **Signals**.
+
+I had seen Elm mentioned a number of times on the <a href="http://reddit.com/r/haskell">Haskell subreddit</a> over the past year or so. I always thought it looked interesting, but I didn't really have any projects that I wanted to try it in. Lately though, I've been wanting to finally really give game programming a shot. I thought this would be the perfect opportunity to get my feet wet with both FRP and Elm. 
+
+####The Plan
+At the time I started experimenting, I didn't have a plan. I wanted to make a game, but beyond that, I didn't know what. I went to Elm's <a href="http://elm-lang.org">homepage</a> and looked at the examples posted there (highly recommended by the way, esp. the <a href="http://elm-lang.org/edit/examples/Intermediate/Pong.elm">Pong</a> and <a href="http://elm-lang.org/edit/examples/Intermediate/Mario.elm">Mario</a> examples). Using the <a href="http://elm-lang.org/try">online editor</a>, I loaded the examples side-by-side with the code and read through it until I thought I understood what things did. Then, with the documentation in another window, I started changing the code. Things broke and I to fixed them, all the while gaining an understanding of how the programs functioned.
+
+After playing around for a while and getting a grasp on the syntax and standard library, I wanted to try making a small single-level platformer. A recent game that I really enjoyed was <a href="http://store.steampowered.com/app/220780/">Thomas Was Alone</a>. In Thomas Was Alone, the player controls a group of rectangles through puzzle/platformer levels. Elm has great built in support for graphics, and among the simplest things to draw to the screen is a rectangle, so I decided that I'd make a prototype platformer homage to Thomas Was Alone. It's affectionately called Thomas Was A Clone.
+
+####Game Setup
+The recommended setup for a game in Elm has four components:
+
+1. Input - defines the **Signals** that will affect the game. Among others, these can be mouse-clicks, key-presses, or the passage of time.
+2. Model - describes the basic elements of the game, *e.g.* characters, levels, enemies, items, etc....
+3. Update - define functions that act on items from the model. By lifting these to work on **Signals**, they can update the items based on the previously defined inputs.
+4. Display - defines how to render everything to the screen.</li>
+
+In the rest of this post, I'm presenting the final code for the Input and Model sections along with commentary about why I did things the way I did, and notes on difficulties I encountered along the way. The next post in the series will go through the longer Update and Display sections.
+
+####Imports & Inputs
+<pre class="prettyprint">
+import Char
+import Keyboard
+import Time
+import Tpoulsen.Lib (elem, listToMaybe)
+import Window
+
+--INPUTS
+type Input = { xDir:Int, yDir:Int, shift:Bool, delta:Time }
+
+delta : Signal Time
+delta = lift (\t -> t/20) (fps 60)
+
+input : Signal Input
+input = sampleOn delta (Input &larr;~ lift .x Keyboard.arrows
+                               ~ lift .y Keyboard.arrows
+                               ~ Keyboard.shift
+                               ~ delta)
+
+</pre>
+
+Imports from the standard Elm modules include *Char*, *Keyboard*, *Time*, and *Window*. When functions from any of these modules are used, they are prefixed with the module's name. In the brief time that I've spent with Elm so far, I've found myself missing a few useful Haskell functions. As I go, I'm implementing these myself in the module Tpoulsen.Lib and importing them as needed (here, *elem* and *listToMaybe*).
+
+The type alias for *Input* is defined using record syntax. The inputs that I wanted to use in this game include:
+
++ *xDir* and *yDir* - These can take the interger values [-1|0|1] based on the player pressing the arrow keys. These are for player movement.
++ *shift* - A Boolean based on whether or not the player is pressing one of the 'shift' keys. This determines whether or not the player is running (as much as a rectangle can be thought to run!).
++ *delta* - This is the sampling rate for the game. The line ```delta = lift (\t -> t/20) (fps 60)``` is saying saying the frame rate should be 60 frames/second, then the lambda function should be lifted to work on the **Signal**.
+
+The last function samples the inputs in the ```(Input <~ lift .x Keyboard.arrows ~ lift .y Keyboard.arrows ~ Keyboard.shift ~ delta)``` block on every delta. In the input block, the (<~) is an alias for lift and the (~) applies the signal following it to the preceeding signal function. This is lifting the Input type to Signal Input. So, at every occurance of *delta*, *input* takes on the new **Input** values.
+
+####Model
+<pre class="prettyprint">
+--MODEL
+data WinState = Won | Lost | InPlay
+type Player   = { x:Float, y:Float, vx:Float, vy:Float, w:Float, h:Float
+                , jumpingV:Float, objFill:Color, active:Bool, alive:Bool }
+type Obstacle = { x:Float, y:Float, w:Float, h:Float, objFill:Color }
+type Game     = { characters:[Player], obstacles:[Obstacle], state:WinState }
+
+--Player
+player1 : Player
+player1 = { x=-390, y=50, vx=0, vy=0, w=10, h=50, jumpingV=8.
+            , objFill=red, active=True, alive=True }
+            
+--Constant Obstacles
+death : Obstacle
+death = { x=-halfWidth, y=0, w= mainWidth, h=0, objFill=black }
+mapSky : Obstacle
+mapSky = { x=halfWidth-250, y=halfHeight, w=3*mainWidth, h=mainHeight, objFill=lightBlue }
+
+--Default game
+defaultGame : Game
+defaultGame = { characters   = [player1]
+              , obstacles    = [ mapSky
+                               , { x=-halfWidth, y=0, w=halfWidth, h=50, objFill=lightGreen }  --Floor
+                               , { x=0,    y=0,   w=300, h=50, objFill=lightGreen }            --Floor
+                               , { x=1300, y=0,   w=500, h=50, objFill=lightGreen }            --Floor
+                               , { x=-100, y=100, w=30,  h=20, objFill=yellow }
+                               , { x=65,   y=60,  w=150, h=15, objFill=purple}
+                               , { x=0,    y=200, w=75,  h=15, objFill=black}
+                               , { x=200,  y=300, w=75,  h=15, objFill=darkGreen}
+                               , { x=750,  y=300, w=75,  h=15, objFill=blue}
+                               , { x=1000, y=150, w=200, h=15, objFill=purple}
+                               , { x=500,  y=70, w=50,   h=15, objFill=purple}
+                               ]
+              , state = InPlay
+              }
+
+</pre>
+
+This is where the things/objects/items that actually make up the game are defined. In this simple platformer, I defined a *WinState* datatype, and type aliases for *Player*, *Obstacles*, and the *Game* itself. *WinState* can take on any of the three values Won/Lost/InPlay.
+
+To model the player, I used location, movement speed, jumping ability, color, active status, and alive status. To allow for the smoothest movement possible while playing, all the values having to do with location and movement are Floats, while statuses are Booleans. The active status (and the reason the Game type takes a list of players) is so that there is an option of adding additional, toggleable characters in the future. The obstacles are static in the scene, so they only have values for location coordinates, size, and color.
+
+The *defaultGame* is where the starting state of the game is set up. The Game type consists of a list of players, a list of obstacles, and a WinState. For the obstacles, I defined the *mapSky* and *death* individually, as they span the entire map (*death* sits at the bottom of the game window, just out of the players view. If the character comes in contact with it by missing a jump and falling, it causes the state to flip to Lost and the game is over). The remaining obstacles defined in the *defaultGame* are the platforms scattered through the level. 
+
+####Wrap up
+This post has gone over the basic structure of a game written in Elm -- Input, Model, Update, and Display -- and started walking through my first attempt at developing a game. I went through the Input and Model steps here and gave my reasoning behind some of the decisions I made. In the next post, I'll cover the Update and Display sections of the game. 
