@@ -13,6 +13,7 @@ addons:
     packages:
     - cabal-install-1.22
     - ghc-7.10.1
+  ssh_known_hosts: travispoulsen.com
 env:
 - - CABALVER=1.22
   - GHCVER=7.10.1
