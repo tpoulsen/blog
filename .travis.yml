@@ -1,35 +1,28 @@
 language: c
-
-# explicitly request container-based infrastructure
 sudo: false
-
-
 cache:
   directories:
-    - $HOME/.cabal/packages
-
+  - $HOME/.cabal/packages
 before_cache:
-  - rm -fv $HOME/.cabal/packages/hackage.haskell.org/00-index.tar
-  - rm -fv $HOME/.cabal/packages/hackage.haskell.org/build-reports.log
-
+- rm -fv $HOME/.cabal/packages/hackage.haskell.org/00-index.tar
+- rm -fv $HOME/.cabal/packages/hackage.haskell.org/build-reports.log
 addons:
   apt:
     sources:
-      - hvr-ghc
+    - hvr-ghc
     packages:
-      - cabal-install-1.22
-      - ghc-7.10.1
-
+    - cabal-install-1.22
+    - ghc-7.10.1
 env:
-  - [CABALVER=1.22, GHCVER=7.10.1]
-
+- - CABALVER=1.22
+  - GHCVER=7.10.1
 before_install:
- - export PATH=$HOME/.cabal/bin:/opt/ghc/$GHCVER/bin:/opt/cabal/$CABALVER/bin:$PATH
-
+- openssl aes-256-cbc -K $encrypted_2fcc66f61dc1_key -iv $encrypted_2fcc66f61dc1_iv
+  -in deploy-key.enc -out ~\/deploy-key -d
+- export PATH=$HOME/.cabal/bin:/opt/ghc/$GHCVER/bin:/opt/cabal/$CABALVER/bin:$PATH
 install:
-  - cabal sandbox init
-  - cabal update
-  - cabal install --only-dependencies
-
+- cabal sandbox init
+- cabal update
+- cabal install --only-dependencies
 script:
-  - cabal run build
+- cabal run build
