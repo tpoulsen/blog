@@ -17,7 +17,7 @@ env:
 - - CABALVER=1.22
   - GHCVER=7.10.1
 before_install:
--base _scripts/install.sh
+- bash _scripts/install.sh
 - export PATH=$HOME/.cabal/bin:/opt/ghc/$GHCVER/bin:/opt/cabal/$CABALVER/bin:$PATH
 install:
 - cabal sandbox init
@@ -26,4 +26,4 @@ install:
 script:
 - cabal run build
 after_success:
-  - base _scripts/deploy.sh
+  - bash _scripts/deploy.sh
