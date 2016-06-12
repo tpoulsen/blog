@@ -2,6 +2,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 import           Data.Monoid (mappend)
 import           Hakyll
+import           Text.Pandoc (writerReferenceLinks)
 
 
 --------------------------------------------------------------------------------
@@ -17,13 +18,13 @@ main = hakyll $ do
 
     match (fromList ["about.rst", "contact.markdown"]) $ do
         route   $ setExtension "html"
-        compile $ pandocCompiler
+        compile $ pandocCompilerWith defaultHakyllReaderOptions pandocWriterConfig
             >>= loadAndApplyTemplate "templates/default.html" defaultContext
             >>= relativizeUrls
 
     match "posts/*" $ do
         route $ setExtension "html"
-        compile $ pandocCompiler
+        compile $ pandocCompilerWith defaultHakyllReaderOptions pandocWriterConfig
             >>= loadAndApplyTemplate "templates/post.html"    postCtx
             >>= loadAndApplyTemplate "templates/default.html" postCtx
             >>= relativizeUrls
@@ -65,3 +66,10 @@ postCtx :: Context String
 postCtx =
     dateField "date" "%B %e, %Y" `mappend`
     defaultContext
+
+--------------------------------------------------------------------------------
+-- Set configuration options for the pandoc writer
+pandocWriterConfig =
+  defaultHakyllWriterOptions {
+      writerReferenceLinks = True
+    }
