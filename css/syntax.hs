@@ -5,10 +5,19 @@ import Clay
 
 main :: IO()
 main = putCss $ do
+  codeBlockStyle
   sourceCodeStyle
   sourceCodeTableStyle
-  codeBlockPreStyle
   tableCellStyle
+
+codeBlockStyle :: Css
+codeBlockStyle =
+  pre ? do
+    backgroundColor "#fdf6e3"
+    padding         (px 10) (px 10) (px 10) (px 10)
+    code <? do
+      fontFamily    ["Monoid", "Fira Code"] [monospace]
+      fontSize      (em 0.8)
 
 sourceCodeStyle :: Css
 sourceCodeStyle =
@@ -68,12 +77,6 @@ sourceCodeTableStyle =
   padding       (px 0) (px 0) (px 0) (px 0)
   border        none (px 0) black
   verticalAlign baseline
-
-codeBlockPreStyle :: Css
-codeBlockPreStyle =
-  pre ? do
-    backgroundColor "#fdf6e3"
-    padding         (px 10) (px 10) (px 10) (px 10)
 
 tableCellStyle :: Css
 tableCellStyle =

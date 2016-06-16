@@ -17,6 +17,8 @@ bodyStyle =
     fontSize (px 16)
     margin   (px 0) auto (px 0) auto
     width    (px 900)
+    fontFamily ["Century Gothic", "Arial", "Helvetica"] [sansSerif]
+    fontSize   (em 1)
 
 headerStyle :: Css
 headerStyle =
