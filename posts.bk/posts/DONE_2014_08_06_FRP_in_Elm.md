@@ -1,3 +1,6 @@
+---
+title: Making Games Part 1
+---
 #Making Games Part 1
 ##*Thomas Was a Clone*
 
