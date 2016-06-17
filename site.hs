@@ -1,8 +1,8 @@
 --------------------------------------------------------------------------------
 {-# LANGUAGE OverloadedStrings #-}
-import           Data.Monoid (mappend)
+import           Data.Monoid (mappend, (<>))
 import           Hakyll
-import           Text.Pandoc (writerReferenceLinks)
+import           Text.Pandoc
 
 
 --------------------------------------------------------------------------------
@@ -84,8 +84,11 @@ postCtx =
 --------------------------------------------------------------------------------
 -- Set configuration options for the pandoc writer
 pandocWriterConfig =
-  defaultHakyllWriterOptions {
-      writerReferenceLinks = True
+  defaultHakyllWriterOptions
+    { writerReferenceLinks = True
+    , writerTemplate = "$toc$\n$body$"
+    , writerStandalone = True
+    , writerTableOfContents = True
     }
 
 feedReaderConfig :: FeedConfiguration
