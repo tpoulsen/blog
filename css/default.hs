@@ -6,6 +6,7 @@ main = putCss $ do
   bodyStyle
   headerTextStyles
   linkStyle
+  imgStyle
   headerStyle
   footerStyle
   logoStyle
@@ -35,6 +36,12 @@ linkStyle :: Css
 linkStyle =
   a ? do
     textDecoration none
+
+
+imgStyle :: Css
+imgStyle =
+  img ? do
+    maxWidth (px 900)
 
 --------------------------------------------------------------------------------
 ------------------------------- Specific elements ------------------------------
@@ -87,6 +94,10 @@ articleStyle =
     display            $ other "flex"
     "flex-direction"  -: "row-reverse"
     "justify-content" -: "flex-end"
+    section # ".toc" <? do
+      "flex" -: "1"
+    section # ".post-body" <? do
+      "flex" -: "3"
 
 tableOfContentsStyle :: Css
 tableOfContentsStyle =
