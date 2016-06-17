@@ -1,7 +1,7 @@
 ---
 title: Pseudo-Pointillism
 ---
-Among my favorite art styles are [cubism](http://www.wikiart.org/en/paintings-by-style/pointillism">pointillism</a> and <a href="http://www.wikiart.org/en/paintings-by-style/cubism). By no means am I an art critic or expert, but I think my attraction to these styles stems from the way they (respectively) deconstruct the colors and shapes of their subjects.
+Among my favorite art styles are [pointillism](http://www.wikiart.org/en/paintings-by-style/pointillism) and [cubism](http://www.wikiart.org/en/paintings-by-style/cubism). By no means am I an art critic or expert, but I think my attraction to these styles stems from the way they (respectively) deconstruct the colors and shapes of their subjects.
 
 As a personal exerciese, I wanted to write a program to take images and reproduce them in a pseudo-pointillist style. Prior to this, I hadn't had any experience programtically manipulating images. 
 
@@ -272,7 +272,7 @@ if __name__ == "__main__":
     <head>
         <meta charset="utf-8">
         <script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
-        <title>Pointilism!</title>
+        <title>Pointillism!</title>
     </head>
     <body>
         <h4>Random picture time!</h4>
