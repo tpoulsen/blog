@@ -23,7 +23,7 @@ main = hakyll $ do
 
     match (fromList ["about.markdown", "contact.markdown"]) $ do
         route   $ setExtension "html"
-        compile $ pandocCompilerWith defaultHakyllReaderOptions pandocWriterConfig
+        compile $ pandocCompiler
             >>= loadAndApplyTemplate "templates/default.html" defaultContext
             >>= relativizeUrls
 
@@ -86,7 +86,7 @@ postCtx =
 pandocWriterConfig =
   defaultHakyllWriterOptions
     { writerReferenceLinks = True
-    , writerTemplate = "$toc$\n$body$"
+    , writerTemplate = "<article class='post'><section class='toc'><h2>Contents</h2>$toc$</section>\n<section class='post-body'>$body$</section></article>"
     , writerStandalone = True
     , writerTableOfContents = True
     }

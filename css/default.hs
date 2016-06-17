@@ -4,12 +4,18 @@ import Clay
 main :: IO()
 main = putCss $ do
   bodyStyle
+  headerTextStyles
+  linkStyle
   headerStyle
   footerStyle
   logoStyle
-  headerTextStyles
   infoStyle
+  articleStyle
+  tableOfContentsStyle
 
+--------------------------------------------------------------------------------
+------------------------------- Generic elements -------------------------------
+--------------------------------------------------------------------------------
 bodyStyle :: Css
 bodyStyle =
   body ? do
@@ -20,6 +26,19 @@ bodyStyle =
     fontFamily ["Century Gothic", "Arial", "Helvetica"] [sansSerif]
     fontSize   (em 1)
 
+headerTextStyles :: Css
+headerTextStyles = do
+  h1 ? fontSize (px 24)
+  h2 ? fontSize (px 20)
+
+linkStyle :: Css
+linkStyle =
+  a ? do
+    textDecoration none
+
+--------------------------------------------------------------------------------
+------------------------------- Specific elements ------------------------------
+--------------------------------------------------------------------------------
 headerStyle :: Css
 headerStyle =
   Clay.div # "#header" ? do
@@ -55,15 +74,21 @@ logoStyle =
     fontWeight     bold
     textDecoration none
 
-
-headerTextStyles :: Css
-headerTextStyles = do
-  h1 ? fontSize (px 24)
-  h2 ? fontSize (px 20)
-
 infoStyle :: Css
 infoStyle =
   Clay.div # ".info" ? do
     color    "#555"
     fontSize (px 14)
     fontStyle italic
+
+articleStyle :: Css
+articleStyle =
+  article # ".post" ? do
+    display            $ other "flex"
+    "flex-direction"  -: "row-reverse"
+    "justify-content" -: "flex-end"
+
+tableOfContentsStyle :: Css
+tableOfContentsStyle =
+  Clay.section # ".toc" ? do
+    float floatRight
