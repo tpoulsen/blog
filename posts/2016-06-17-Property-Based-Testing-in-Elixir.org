@@ -1,0 +1,81 @@
+---
+title: Property Based Testing in Elixir
+---
+
+* Abstract
+Property based testing is a testing methodology in which the developer describes properties that the tested code should satisfy. Along with the properties, the developer describes the data that should be generated to test these properties. The testing framework uses the generator to derive the inputs used to test whether the code satisfies the given properties.
+* Introduction
+Testing code properly is difficult. I find that, for personal projects, I often end up neglecting rigorous testing in favor of banging away at the code I write in a repl because that is easier to do than coming up with appropriate test cases that fully cover the potential inputs to the functions[fn:1]. I find that property based testing provides the right balance of power to time to make it entirely worthwhile.
+
+Property based testing was popularized by Haskell's [[https://hackage.haskell.org/package/QuickCheck-2.8.2/docs/Test-QuickCheck.html][QuickCheck]] library. Since its debut in 1999, QuickCheck, or at least its ideas, has been ported to [[http://hypothesis.works/articles/quickcheck-in-every-language/][many languages]]. In QuickCheck and property based tests in general, one specifies properties or laws about his or her functions that should hold to be true. Given a boolean property, *e.g.* src_haskell{x + y == y + x} and a type signature src_haskell{Int -> Int -> Bool}, QuickCheck can generate random inputs that match the type signature to test the properties validity (by default, it generates data for and runs 100 tests; this is user configurable). Should a test fail, QuickCheck shrinks the test case to find the smallest value that produces a failing result. For functions that operate on more complex types, users can write generators that tell QuickCheck how to randomly create test data.
+
+The difficult part of property based testing is coming up with the properties themselves. I find this to be a beneficial exercise though, as it makes me think about what it is that I really want a particular function to do. Some example properties[fn:2]:
+
+#+BEGIN_SRC haskell
+-- Reversing a list twice is the same as the original list.
+prop_doubleReverseList :: [a] -> Bool
+prop_doubleReverseList xs =
+  xs == reverse(reverse xs)
+
+-- The first element of a list becomes the last element when reversed.
+prop_reverseHeadToLast :: [a] -> Bool
+prop_reverseHeadToLast xs =
+  head xs == last $ reverse xs
+#+END_SRC
+
+One of the extant property based testing libraries in the Elixir world is [[https://github.com/parroty/excheck][ExCheck]], which is built on top of the Erlang QuickCheck port [[https://github.com/krestenkrab/triq][Triq]].
+
+* ExCheck
+
+** Quicksort
+#+begin_src elixir 
+defmodule Quicksort do
+
+  @spec sort([any]) :: [any]
+  def sort(array) do
+    case array do
+      [] ->
+        []
+      _ ->
+        [head | tail] = array
+        pivot = head
+        smaller = tail |> Enum.filter(&(&1 <= pivot))
+        greater = tail |> Enum.filter(&(&1 > pivot))
+        [sort(smaller) | [pivot | sort(greater)]] |> List.flatten
+    end
+  end
+end
+#+end_src
+
+** Test
+#+begin_src elixir
+defmodule QuicksortTest do
+  use ExUnit.Case, async: true
+  use ExCheck
+  doctest Quicksort
+
+  property :sorts_integers do
+    for_all x in list(int) do
+      Quicksort.sort(x) == Enum.sort(x)
+    end
+  end
+
+  property :sorts_real_numbers do
+    for_all x in list(real) do
+      Quicksort.sort(x) == Enum.sort(x)
+    end
+  end
+
+  property :sorts_words do
+    for_all x in list(binary) do
+      Quicksort.sort(x) == Enum.sort(x)
+    end
+  end
+end
+#+end_src
+
+* Footnotes
+
+[fn:2] By convention, QuickCheck properties begin with =prop_=.
+
+[fn:1] It has not been lost on me that putting what often ends up being the same few commands run in the repl into a test-suite would ultimately end up saving me time.
