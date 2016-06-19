@@ -7,25 +7,49 @@ Property based testing is a testing methodology in which the developer describes
 * Introduction
 Testing code properly is difficult. I find that, for personal projects, I often end up neglecting rigorous testing in favor of banging away at the code I write in a repl because that is easier to do than coming up with appropriate test cases that fully cover the potential inputs to the functions[fn:1]. I find that property based testing provides the right balance of power to time to make it entirely worthwhile.
 
-Property based testing was popularized by Haskell's [[https://hackage.haskell.org/package/QuickCheck-2.8.2/docs/Test-QuickCheck.html][QuickCheck]] library. Since its debut in 1999, QuickCheck, or at least its ideas, has been ported to [[http://hypothesis.works/articles/quickcheck-in-every-language/][many languages]]. In QuickCheck and property based tests in general, one specifies properties or laws about his or her functions that should hold to be true. Given a boolean property, *e.g.* src_haskell{x + y == y + x} and a type signature src_haskell{Int -> Int -> Bool}, QuickCheck can generate random inputs that match the type signature to test the properties validity (by default, it generates data for and runs 100 tests; this is user configurable). Should a test fail, QuickCheck shrinks the test case to find the smallest value that produces a failing result. For functions that operate on more complex types, users can write generators that tell QuickCheck how to randomly create test data.
+Property based testing was popularized by Haskell's [[https://hackage.haskell.org/package/QuickCheck-2.8.2/docs/Test-QuickCheck.html][QuickCheck]] library. Since its debut in 1999, QuickCheck, or at least its ideas, has been ported to [[http://hypothesis.works/articles/quickcheck-in-every-language/][many languages]]. In QuickCheck and property based tests in general, one specifies properties or laws about his or her functions that should hold to be true. Given a Boolean property, *e.g.* src_haskell{x + y == y + x} and a type signature src_haskell{Int -> Int -> Bool}, QuickCheck can generate random inputs that match the type signature to test the properties validity (by default, it generates data for and runs 100 tests; this is user configurable). Should a test fail, QuickCheck shrinks the test case to find the smallest value that produces a failing result. For functions that operate on more complex types, users can write generators that tell QuickCheck how to randomly create test data.
 
 The difficult part of property based testing is coming up with the properties themselves. I find this to be a beneficial exercise though, as it makes me think about what it is that I really want a particular function to do. Some example properties[fn:2]:
 
 #+BEGIN_SRC haskell
 -- Reversing a list twice is the same as the original list.
-prop_doubleReverseList :: [a] -> Bool
+prop_doubleReverseList :: [Int] -> Bool
 prop_doubleReverseList xs =
   xs == reverse(reverse xs)
 
+prop_reverseLength :: [Int] -> Bool
+prop_reverseLength xs =
+  length xs == length $ reverse xs
+
 -- The first element of a list becomes the last element when reversed.
-prop_reverseHeadToLast :: [a] -> Bool
+prop_reverseHeadToLast :: [Int] -> Property
 prop_reverseHeadToLast xs =
-  head xs == last $ reverse xs
+  length xs > 0 ==>
+  (head xs) == (last $ reverse xs)
 #+END_SRC
 
-One of the extant property based testing libraries in the Elixir world is [[https://github.com/parroty/excheck][ExCheck]], which is built on top of the Erlang QuickCheck port [[https://github.com/krestenkrab/triq][Triq]].
+Running these tests in ghci:
+
+#+BEGIN_SRC zsh
+$ cabal repl
+Preprocessing executable 'reverse_test' for quickcheck-demo-0.1.0.0...
+GHCi, version 7.10.3: http://www.haskell.org/ghc/  :? for help
+[1 of 1] Compiling Main             ( reverse_test.hs, interpreted )
+Ok, modules loaded: Main.
+*Main> quickCheck prop_doubleReverseList 
++++ OK, passed 100 tests.
+*Main> quickCheck prop_reverseLength 
++++ OK, passed 100 tests.
+*Main> quickCheck prop_reverseHeadToLast 
++++ OK, passed 100 tests.
+#+END_SRC
+
+So, coming up with a few properties that a ~reverse~ function on a list should satisfy, allows us to run hundreds of tests with randomly generated data.
 
 * ExCheck
+One of the property based testing libraries in the Elixir world is [[https://github.com/parroty/excheck][ExCheck]]. Built on top of the Erlang QuickCheck port [[https://github.com/krestenkrab/triq][Triq]], ExCheck allows developers to easily mix property based tests in with standard unit tests with minimal friction.
+
+To add ExCheck to a project, add src_elixir{{:excheck, "~> 0.3", only: :test}} to the mix file. To demonstrate ExCheck in action, I'll use this quicksort implementation.
 
 ** Quicksort
 #+begin_src elixir 
@@ -47,34 +71,84 @@ defmodule Quicksort do
 end
 #+end_src
 
+** Building a test suite for ~Quicksort.sort~
+*** Properties
+To make sure that the sorting function is doing what we expect, we can create a test suite of properties that should hold true when a list has been sorted. Potential properties that a sorting algorithm should satisfy include:
+- The result of sorting an already sorted list should be the same as the initial list[fn:3].
+  - The result of sorting a list with a single item is the single element list.
+- The first element of a sorted list should be less than or equal to the last element of the list.
+- The result of sorting a list with our sorting function should be the same as the result of sorting with Elixir's standard sorting function.
+*** ExCheck specific usage
+One of the nice things Haskell's QuickCheck has that we can't leverage in Elixir is using the type system to specify they types of the randomly generated function inputs.
 ** Test
 #+begin_src elixir
-defmodule QuicksortTest do
-  use ExUnit.Case, async: true
-  use ExCheck
-  doctest Quicksort
+  defmodule QuicksortTest do
+    use ExUnit.Case, async: true
+    use ExCheck                           # Import ExCheck into the module.
+    doctest Quicksort
 
-  property :sorts_integers do
-    for_all x in list(int) do
-      Quicksort.sort(x) == Enum.sort(x)
+    property :sort_is_idempotent do
+      for_all x in list(int) do           # Tell ExCheck how to generate data
+        sorted = Quicksort.sort(x)
+        Quicksort.sort(sorted) == sorted
+      end
+    end
+
+    property :single_element_list_is_sorted do
+      for_all x in int do
+        Quicksort.sort([x]) == [x]
+      end
+    end
+
+    property :head_less_eql_to_tail do
+      for_all x in list(int) do
+        implies x != [] do                # Condition for test data
+          sorted = Quicksort.sort(x)
+          hd(sorted) <= List.last(sorted)
+        end
+      end
+    end
+
+    property :sorts_integers do
+      for_all x in list(int) do
+        Quicksort.sort(x) == Enum.sort(x)
+      end
+    end
+
+    property :sorts_real_numbers do
+      for_all x in list(real) do
+        Quicksort.sort(x) == Enum.sort(x)
+      end
     end
   end
-
-  property :sorts_real_numbers do
-    for_all x in list(real) do
-      Quicksort.sort(x) == Enum.sort(x)
-    end
-  end
-
-  property :sorts_words do
-    for_all x in list(binary) do
-      Quicksort.sort(x) == Enum.sort(x)
-    end
-  end
-end
 #+end_src
 
+Running these tests gives:
+#+BEGIN_SRC zsh
+$ mix test --trace test/quicksort_test.exs 
+
+QuicksortTest
+  * test sorts_integers_property (25.0ms).......................................
+  ....................................................
+  * test sorts_real_numbers_property (9.6ms)....................................
+  ........................................................
+  * test single_element_list_is_sorted_property (0.9ms).........................
+  ...................................................................
+  * test sort_is_idempotent_property (37.1ms)...................................
+  ........................................................x
+  * test head_less_eql_to_tail_property (8.7ms)....x............................
+  ...................x......................................
+
+
+Finished in 0.2 seconds
+502 tests, 0 failures
+#+END_SRC
+
+** Observations
+
 * Footnotes
+
+[fn:3] An example of idempotency, a useful property to test when possible. An idempotent function is one which produces the same result no matter how many times it is called; ~f(f(x)) == f(x)~
 
 [fn:2] By convention, QuickCheck properties begin with =prop_=.
 
