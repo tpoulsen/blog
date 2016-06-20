@@ -5,9 +5,9 @@ title: Property Based Testing in Elixir
 * Abstract
 Property based testing is a testing methodology in which the developer describes properties that the tested code should satisfy. Along with the properties, the developer describes the data that should be generated to test these properties. The testing framework uses the generator to derive the inputs used to test whether the code satisfies the given properties.
 * Introduction
-Testing code properly is difficult. I find that, for personal projects, I often end up neglecting rigorous testing in favor of banging away at the code I write in a repl because that is easier to do than coming up with appropriate test cases that fully cover the potential inputs to the functions[fn:1]. I find that property based testing provides the right balance of power to time to make it entirely worthwhile.
+Properly testing code is difficult. I find that, for personal projects, I often end up neglecting rigorous testing in favor of banging away at the code I write in a repl because that is easier to do than coming up with appropriate test cases that fully cover the potential inputs to the functions[fn:1]. I find that property based testing provides the right balance of power to time to make it entirely worthwhile.
 
-Property based testing was popularized by Haskell's [[https://hackage.haskell.org/package/QuickCheck-2.8.2/docs/Test-QuickCheck.html][QuickCheck]] library. Since its debut in 1999, QuickCheck, or at least its ideas, has been ported to [[http://hypothesis.works/articles/quickcheck-in-every-language/][many languages]]. In QuickCheck and property based tests in general, one specifies properties or laws about his or her functions that should hold to be true. Given a Boolean property, *e.g.* src_haskell{x + y == y + x} and a type signature src_haskell{Int -> Int -> Bool}, QuickCheck can generate random inputs that match the type signature to test the properties validity (by default, it generates data for and runs 100 tests; this is user configurable). Should a test fail, QuickCheck shrinks the test case to find the smallest value that produces a failing result. For functions that operate on more complex types, users can write generators that tell QuickCheck how to randomly create test data.
+Property based testing was popularized by Haskell's [[https://hackage.haskell.org/package/QuickCheck-2.8.2/docs/Test-QuickCheck.html][QuickCheck]] library. Since its debut in 1999, QuickCheck, or at least its ideas, has been ported to [[http://hypothesis.works/articles/quickcheck-in-every-language/][many languages]]. In QuickCheck and property based tests in general, one specifies properties or laws about his or her functions that should hold to be true. Given a Boolean property, *e.g.* src_haskell{x + y == y + x} and a type declaration src_haskell{Int -> Int -> Bool}, QuickCheck can generate random inputs that match the type declaration to test the properties validity (by default, it generates data for and runs 100 tests; this is user configurable). Should a test fail, QuickCheck shrinks the test case to find the smallest value that produces a failing result. For functions that operate on more complex types, users can write generators that tell QuickCheck how to randomly create test data.
 
 The difficult part of property based testing is coming up with the properties themselves. I find this to be a beneficial exercise though, as it makes me think about what it is that I really want a particular function to do. Some example properties[fn:2]:
 
@@ -52,21 +52,18 @@ One of the property based testing libraries in the Elixir world is [[https://git
 To add ExCheck to a project, add src_elixir{{:excheck, "~> 0.3", only: :test}} to the mix file. To demonstrate ExCheck in action, I'll use this quicksort implementation.
 
 ** Quicksort
+#+NAME: quicksort_module
 #+begin_src elixir 
 defmodule Quicksort do
 
   @spec sort([any]) :: [any]
+  def sort([]), do: []
   def sort(array) do
-    case array do
-      [] ->
-        []
-      _ ->
-        [head | tail] = array
-        pivot = head
-        smaller = tail |> Enum.filter(&(&1 <= pivot))
-        greater = tail |> Enum.filter(&(&1 > pivot))
-        [sort(smaller) | [pivot | sort(greater)]] |> List.flatten
-    end
+    [head | tail] = array
+    pivot = head
+    smaller = tail |> Enum.filter(&(&1 <= pivot))
+    greater = tail |> Enum.filter(&(&1 > pivot))
+    [sort(smaller) | [pivot | sort(greater)]] |> List.flatten
   end
 end
 #+end_src
@@ -74,13 +71,91 @@ end
 ** Building a test suite for ~Quicksort.sort~
 *** Properties
 To make sure that the sorting function is doing what we expect, we can create a test suite of properties that should hold true when a list has been sorted. Potential properties that a sorting algorithm should satisfy include:
-- The result of sorting an already sorted list should be the same as the initial list[fn:3].
-  - The result of sorting a list with a single item is the single element list.
-- The first element of a sorted list should be less than or equal to the last element of the list.
-- The result of sorting a list with our sorting function should be the same as the result of sorting with Elixir's standard sorting function.
+1. The result of sorting an already sorted list should be the same as the initial list[fn:3].
+  1a. The result of sorting a list with a single item is the single element list.
+2. The first element of a sorted list should be less than or equal to the last element of the list.
+3. The result of sorting a list with our sorting function should be the same as the result of sorting with Elixir's standard sorting function.
+
 *** ExCheck specific usage
-One of the nice things Haskell's QuickCheck has that we can't leverage in Elixir is using the type system to specify they types of the randomly generated function inputs.
-** Test
+**** Properties
+In ExCheck, we use the ~property~ macro to define our tests:
+#+BEGIN_SRC elixir
+property :property_name do
+  ...
+end
+#+END_SRC
+
+**** Generators
+One of the nice things Haskell's QuickCheck has that we can't leverage in Elixir is using the type system to specify they types of the randomly generated function inputs. In ExCheck tests, we specify the arguments and their types inside of the ~property~ macro. These follow the format: 
+
+#+BEGIN_SRC elixir
+property :property_name do
+  for_all :var in :generator do
+    ...
+  end
+end
+#+END_SRC
+
+ExCheck provides generators for[fn:4]:
+
+#+BEGIN_QUOTE
+- list/1, tuple/1, int/0, int/1, int/2, byte/0, real/0, sized/1, elements/1, any/0, atom/0, atom/1, choose/2, oneof/1, frequency/1, bool/0, char/0, return/1, vector/2, binary/1, binary/0, non\_empty/1, resize/2, non\_neg\_integer/0, pos\_integer/0,
+- unicode\_char/0, unicode\_string/0, unicode\_string/1, unicode\_binary/0, unicode\_binary/1, unicode\_binary/2, unicode\_characters/0, unicode\_characters/1,
+- bind/2, bindshrink/2, suchthat/2, pick/2, shrink/2, sample/1, sampleshrink/1, seal/1, open/1, peek/1, domain/3, shrink\_without\_duplicates/1
+#+END_QUOTE
+
+**** Specifying predicates
+Optionally, we can use the ~implies~ macro to supply predicates for the generated test data. 
+
+#+BEGIN_SRC elixir
+property :property_name do
+  for_all :var in :generator do
+    implies {:predicate} do
+      ...
+    end
+  end
+end
+#+END_SRC
+
+We can use the ~implies~ macro to write a test for the third property we came up with previously, the head of a sorted list should be less than or equal to the last element. Without constraining the test input here, an src_erlang{ArgumentError} would be raised if we tried to call head on an empty list (src_elixir{hd([])}).
+
+#+BEGIN_SRC elixir
+  property :head_less_eql_to_tail do
+    for_all x in list(int) do
+      implies x != [] do                # Condition for test data
+        sorted = Quicksort.sort(x)
+        hd(sorted) <= List.last(sorted)
+      end
+    end
+  end
+#+END_SRC
+
+A potential drawback to using ~implies~ is that it generates the data up front and simply skips test runs on data that fail the predicate. Depending on the probability of generating data that satisy the condition, it's possible that an unsatisfactory number of runs would be skipped. An alternative is to define a generator using the ~such_that~ macro. 
+
+These take the form src_elixir{for_all :var in such_that(:var in :generator when :predicate) do}. Using ~such_that~, we could rewrite the previous test as:
+
+#+BEGIN_SRC elixir
+  property :head_less_eql_to_tail_two do
+    for_all x in such_that(x in list(int) when x != []) do
+      sorted = Quicksort.sort(x)
+      hd x <= List.last x
+    end
+  end
+#+END_SRC
+
+Now, we've written the generator so that all the data generated for the test satisfy the predicate. The tradeoff is that, if the generator is particularly complex, it will take longer to generate the data.
+
+** Testing
+
+So, we've got a quicksort implementation and we have some properties that we believe our quicksort should satisfy. 
+
+To put it all together and test ~Quicksort.sort~, we'll:
+
+1. src_elixir{use ExCheck} in ~quicksort_test.exs~
+2. Declare our properties using generators and predicates when necessary
+3. Run src_zsh{mix test --trace test/quicksort_test.exs} from the command line 
+
+#+NAME: QuickSort tests
 #+begin_src elixir
   defmodule QuicksortTest do
     use ExUnit.Case, async: true
@@ -102,10 +177,17 @@ One of the nice things Haskell's QuickCheck has that we can't leverage in Elixir
 
     property :head_less_eql_to_tail do
       for_all x in list(int) do
-        implies x != [] do                # Condition for test data
+        implies x != [] do                # Predicate for test data
           sorted = Quicksort.sort(x)
           hd(sorted) <= List.last(sorted)
         end
+      end
+    end
+
+    property :head_less_eql_to_tail_two do
+      for_all x in such_that(x in list(int) when x != []) do
+        sorted = Quicksort.sort(x)
+        hd x <= List.last x
       end
     end
 
@@ -125,28 +207,77 @@ One of the nice things Haskell's QuickCheck has that we can't leverage in Elixir
 
 Running these tests gives:
 #+BEGIN_SRC zsh
-$ mix test --trace test/quicksort_test.exs 
+$ mix test --trace test/quicksort_test.exs
 
 QuicksortTest
-  * test sorts_integers_property (25.0ms).......................................
-  ....................................................
-  * test sorts_real_numbers_property (9.6ms)....................................
-  ........................................................
-  * test single_element_list_is_sorted_property (0.9ms).........................
-  ...................................................................
-  * test sort_is_idempotent_property (37.1ms)...................................
-  ........................................................x
-  * test head_less_eql_to_tail_property (8.7ms)....x............................
-  ...................x......................................
+  * test sort_is_idempotent_property (48.5ms)..................................
+.........................................................
+  * test sorts_real_numbers_property (10.1ms)..................................
+.........................................................
+  * test sorts_integers_property (12.5ms)......................................
+.....................................................
+  * test head_less_eql_to_tail_property (8.3ms).......x.....x..................
+.....x....................................................x..
+  * test head_two_property (10.0ms)............................................
+..............................................
+  * test single_element_list_is_sorted_property (1.1ms)........................
+...................................................................
 
 
-Finished in 0.2 seconds
-502 tests, 0 failures
+Finished in 0.3 seconds
+601 tests, 0 failures
+
+Randomized with seed 53286
 #+END_SRC
 
-** Observations
+The ~x~'s in the output indicate tests that failed the ~implies~ predicate and were skipped.
+
+In this case, we got lucky and all of our tests passed. One of the most useful things about QuickCheck and its ports though is what happens when tests fail. 
+
+*** Failure
+When tests fail, ExUnit attempts to shrink the generated input into a minimal example of failure. If we were to add a test to suite that should fail, *e.g.* with our ~Quicksort.sort~ function, a sorted list's head should be greater than its last element:
+
+#+BEGIN_SRC elixir
+  property :head_greater_than_tail do
+    for_all x in list(int) do
+      implies x != [] do
+        sorted = Quicksort.sort(x)
+        hd(sorted) >= List.last(sorted)
+      end
+    end
+  end
+#+END_SRC
+
+Running this (other tests omitted for brevity) results in:
+
+#+BEGIN_SRC zsh
+  * test head_greater_than_tail_property (5.3ms)
+......................................................................
+  1) test head_greater_than_tail_property (QuicksortTest)
+     test/quicksort_test.exs:52
+     Expected truthy, got false
+     code: ExCheck.check(prop_head_fail(), context[:iterations])
+     stacktrace:
+       test/quicksort_test.exs:52: (test)
+
+Failed!
+
+Failed after 3 tests with false
+Simplified:
+        x = [0,-1]
+
+#+END_SRC
+
+ExCheck is telling us that our property doesn't hold up and it gives us an example of generated input that results in failure. In our property, we expected the head of the list to be greater than or equal to the last element; ~0 >= -1~ in this case. This is extremely useful for checking assumptions you've made about your code, discovering edge cases you hadn't considered, and general debugging.
+
+** Conclusion
+I find property based testing to be a valuable tool for thoroughly testing code and helping me to uncover edge cases that I hadn't properly handled. Formalizing the properites that I want to test helps me to think about what it is I actually want my code to do.
+
+ExCheck provides a nice QuickCheck implementation for Elixir by leveraging triq, an existing Erlang QuickCheck port. By using ExChec's ~properties~, ~generators~, and ~predicates~, you can add this powerful testing methodology to your repertoire.
 
 * Footnotes
+
+[fn:4] https://github.com/parroty/excheck#generators 
 
 [fn:3] An example of idempotency, a useful property to test when possible. An idempotent function is one which produces the same result no matter how many times it is called; ~f(f(x)) == f(x)~
 
