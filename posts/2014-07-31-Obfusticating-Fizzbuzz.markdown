@@ -1,5 +1,6 @@
 ---
 title: Obfusticating FizzBuzz
+tags: haskell, functional programming
 ---
 
 <a href="https://en.wikipedia.org/wiki/Fizz_buzz">FizzBuzz</a> is an exercise based on a kid's game in which one counts from 1 to 100. The catch is that multiples of 3 are replaced with the word "Fizz", multiples of 5 with the word "Buzz" and multiples of both 3 and 5 with "FizzBuzz." Writing a program to perform this task should be easy, but annecdotally its use as a test during interviews <a href="http://blog.codinghorror.com/why-cant-programmers-program/">apparently</a> gives a large number of job applicants trouble.
