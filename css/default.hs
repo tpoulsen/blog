@@ -20,12 +20,13 @@ main = putCss $ do
 bodyStyle :: Css
 bodyStyle =
   body ? do
-    color    black
-    fontSize (px 16)
-    margin   (px 0) auto (px 0) auto
-    width    (px 900)
+    color      black
+    fontSize   (px 16)
+    margin     (px 0) auto (px 0) auto
+    width      (px 900)
     fontFamily ["Century Gothic", "Arial", "Helvetica"] [sansSerif]
     fontSize   (em 1)
+    lineHeight (em 1.5)
 
 headerTextStyles :: Css
 headerTextStyles = do
