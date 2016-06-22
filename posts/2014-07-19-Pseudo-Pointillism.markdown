@@ -2,7 +2,7 @@
 title: Pseudo-Pointillism
 tags: python, d3
 ---
-Among my favorite art styles are [pointillism](http://www.wikiart.org/en/paintings-by-style/pointillism) and [cubism](href=http://www.wikiart.org/en/paintings-by-style/cubism). By no means am I an art critic or expert, but I think my attraction to these styles stems from the way they (respectively) deconstruct the colors and shapes of their subjects.
+Among my favorite art styles are [pointillism](http://www.wikiart.org/en/paintings-by-style/pointillism) and [cubism](http://www.wikiart.org/en/paintings-by-style/cubism). By no means am I an art critic or expert, but I think my attraction to these styles stems from the way they (respectively) deconstruct the colors and shapes of their subjects.
 
 As a personal exerciese, I wanted to write a program to take images and reproduce them in a pseudo-pointillist style. Prior to this, I hadn't had any experience programtically manipulating images. 
 
