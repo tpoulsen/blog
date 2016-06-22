@@ -1,42 +1,60 @@
 ---
 title: Property Based Testing in Elixir
+tags: elixir, haskell, testing, quickcheck
 ---
 
-* Abstract/TL;DR
-When using property based testing, a developer describes properties about his or her code that should always hold true. QuickCheck style testing frameworks use random data, derived via user supplied generators, to repeatedly test the defined properties. In this way, a single property test can result in hundreds of test runs against a random sample of possible inputs.
+* TL;DR
+Property based testing lets the developer describes properties about his or her code that should always hold true. QuickCheck style testing frameworks use random data, derived from user supplied generators, to repeatedly test these properties. In this way, a single property test can result in hundreds of test runs against a random sample of possible inputs. ExCheck is an Elixir library for property based testing. 
 * Introduction
-Testing code is difficult. Setting tests up takes away time that could be spent on new development. Write tests requires thinking long and hard about the entirety of inputs that could be supplied as arguments to the tested functions. To effectively write tests, one must think about how to *break* the code he or she has written. It isn't enough to write example tests that cover the best-case or most obvious scenarios. 
+Testing code is difficult. Writing effective tests requires thinking about how to actually *break* the tested code. It isn't enough to write example tests that cover the best-case or most obvious scenarios. Instead, it is necessary to consider the entirety of the function's domain and determine which arguments are the best for covering both the desired functionality and edge cases.
 
-A good test suite is like a hypothesis[fn:5] that the code functions as it should. It's up to the developer to write tests that attempt to disprove this hypothesis. Thousands of test cases can indicate that everything is well written and behaving as it should. The developer must try to find the one case of malformed input or an unexpected argument that will cause the system to crash. 
+A good test suite is an experiment designed to find evidence to reject the hypothesis[fn:5] that the tested code is correct. As with any set of experiments, thousands of test cases can support the hypothesis, but the developer must try to find and test against the one case of unaccounted for or malformed input that will cause the system to crash. 
 
-That said, I find that for personal projects I often end up neglecting rigorous automated testing. Instead, I tend to bang away in a repl because there's less up front cost to that than coming up with appropriate test cases that fully cover the potential inputs to the functions[fn:1]. As opposed to more traditional example based testing (perform some set up, add a few carefully crafted examples, and check that the results equal some expected outcome), I find that property based testing provides the right balance of power to time to make it entirely worthwhile.
+That said, I find that for personal projects I often end up neglecting rigorous automated testing. Instead, I tend to exercise my modules and functions in a repl because there's less up front cost to that than coming up with appropriate test cases that fully cover the functional domain[fn:1]. Unlike traditional example based testing (writing one test run at a time: perform some set up, add a few carefully crafted examples, and check that the results equal some expected outcome), I believe that property based testing provides the right balance of power to time to make it worthwhile.
 
-Property based testing was popularized by Haskell's [[https://hackage.haskell.org/package/QuickCheck-2.8.2/docs/Test-QuickCheck.html][QuickCheck]] library. Since its debut in 1999, QuickCheck has been ported in some capacity to [[http://hypothesis.works/articles/quickcheck-in-every-language/][many languages]]. In property based tests, one specifies properties about his or her functions that should always hold true. Each property is tested against a large number of random inputs; in this way, a single property is tested with very large inputs, very small inputs, empty lists, unicode characters, binary data, etc. as appropriate based on the provided data types.
+Property based testing was popularized by Haskell's [[https://hackage.haskell.org/package/QuickCheck-2.8.2/docs/Test-QuickCheck.html][QuickCheck]] library. Since its debut in 1999, QuickCheck has been ported in some capacity to [[http://hypothesis.works/articles/quickcheck-in-every-language/][many languages]]. To write property based tests, the developer specifies properties or laws about his or her code that should always hold true. Each property is then tested against a large number of random inputs; in this way, a single property is tested with arguments randomly sampled from the function's domain (*e.g.* very large numbers, very small numbers, empty lists, unicode characters, binary data, etc...) as is appropriate based on the function's signature.
 
-The difficult part of property based testing is coming up with the properties themselves. I find this to be a beneficial exercise though, as it makes me think about what it is that I really want a particular function to do.
+** Anatomy of QuickCheck tests
 
-** Haskell/QuickCheck example
+QuickCheck tests require a few things[fn:6]:
 
-Given a Boolean property, *e.g.* src_haskell{x + y == y + x} and a type declaration src_haskell{Int -> Int -> Bool}, QuickCheck can generate random inputs that match the type declaration to test the property's validity (by default, it generates data for and runs 100 tests; this is user configurable). Should a test fail, QuickCheck shrinks the test case to find the smallest value that produces a failing result. For functions that operate on more complex types, users can write generators that tell QuickCheck how to randomly create test data. Some example properties[fn:2]:
++ A boolean property written as a function 
+#+BEGIN_SRC haskell
+  commutativeAdd x y = x + y == y + x
+#+END_SRC
++ A way to generate sample data (in QuickCheck, this is the property's type declaration)
+#+BEGIN_SRC haskell
+commutativeAdd :: Int -> Int -> Bool
+#+END_SRC
++ Optionally, a predicate or condition to filter out some subset of generated inputs
++ Optionally, a number of tests to run for a property; this is 100 by default
+
+QuickCheck randomly generates inputs that fit the type declaration to test the property's validity. If a test fails, QuickCheck shrinks the test input to find the smallest example of a failing value[fn:7]. For functions that operate on more complex types, users can write generators that tell QuickCheck how to randomly create test data.
+
+A suite of property tests for a list reversal function could look like the following[fn:2]:
 
 #+BEGIN_SRC haskell
--- Reversing a list twice is the same as the original list.
-prop_doubleReverseList :: [Int] -> Bool
+-- Reversing a list twice is the same as
+--   the original list.
+prop_doubleReverseList :: [Int] -> Bool          -- Type declaration/input generator
 prop_doubleReverseList xs =
-  xs == reverse(reverse xs)
+  xs == reverse(reverse xs)                      -- Property to test
 
+-- A reversed list is the same length as 
+--  the original list.
 prop_reverseLength :: [Int] -> Bool
 prop_reverseLength xs =
   length xs == length $ reverse xs
 
--- The first element of a list becomes the last element when reversed.
+-- The first element of a list becomes the 
+--   last element when reversed.
 prop_reverseHeadToLast :: [Int] -> Property
 prop_reverseHeadToLast xs =
-  length xs > 0 ==>
+  length xs > 0 ==>                             -- Predicate, so we don't test against empty lists 
   (head xs) == (last $ reverse xs)
 #+END_SRC
 
-Running these tests in ghci:
+Running these tests in ghci (the Haskell repl):
 
 #+BEGIN_SRC zsh
 $ cabal repl
@@ -44,7 +62,7 @@ Preprocessing executable 'reverse_test' for quickcheck-demo-0.1.0.0...
 GHCi, version 7.10.3: http://www.haskell.org/ghc/  :? for help
 [1 of 1] Compiling Main             ( reverse_test.hs, interpreted )
 Ok, modules loaded: Main.
-*Main> quickCheck prop_doubleReverseList 
+*Main> quickCheck prop_doubleReverseList        # Running the quickCheck function on a property 
 +++ OK, passed 100 tests.
 *Main> quickCheck prop_reverseLength 
 +++ OK, passed 100 tests.
@@ -55,34 +73,104 @@ Ok, modules loaded: Main.
 So, coming up with a few properties that a ~reverse~ function on a list should satisfy, allows us to run hundreds of tests with randomly generated data.
 
 * ExCheck
-One of the property based testing libraries in the Elixir world is [[https://github.com/parroty/excheck][ExCheck]]. Built on top of the Erlang QuickCheck port [[https://github.com/krestenkrab/triq][Triq]], ExCheck allows developers to easily mix property based tests in with standard unit tests with minimal friction.
+[[https://github.com/parroty/excheck][ExCheck]] is an Elixir property based testing library that is built on top of the Erlang QuickCheck port [[https://github.com/krestenkrab/triq][Triq]]. ExCheck allows developers to easily add property based tests to test suites with minimal friction.
 
-To add ExCheck to a project, add src_elixir{{:excheck, "~> 0.3", only: :test}} to the mix file. To demonstrate ExCheck in action, I'll use this quicksort implementation.
+To demonstrate its use, we'll create a new Elixir project for an implementation of the quicksort algorithm and write some tests based on properties that a sorted list should satisfy.
+
+** Project setup[fn:8]
+We'll start by creating a new project using src_zsh{mix new}:
+#+BEGIN_SRC zsh
+$ mix new quicksort
+* creating README.md
+* creating .gitignore
+* creating mix.exs
+* creating config
+* creating config/config.exs
+* creating lib
+* creating lib/quicksort.ex
+* creating test
+* creating test/test_helper.exs
+* creating test/quicksort_test.exs
+
+Your Mix project was created successfully.
+You can use "mix" to compile it, test it, and more:
+
+    cd quicksort
+    mix test
+
+Run "mix help" for more commands.
+
+# From here out it we'll work in the project directory.
+# All paths will be relative to it.
+$ cd quicksort
+#+END_SRC
+
+To add ExCheck to the project, modify the dependencies section[fn:9] of =mix.exs= to look like:
+#+BEGIN_SRC elixir
+  defp deps do
+    [
+      {:excheck, "~> 0.3", only: :test},
+      {:triq, github: "krestenkrab/triq", only: :test},
+    ]
+  end
+#+END_SRC
+
+To install these dependencies, run:
+#+BEGIN_SRC zsh
+$ mix deps.get
+#+END_SRC
 
 ** Quicksort
+This is the quicksort implementation that we're going to test:
+
 #+NAME: quicksort_module
 #+begin_src elixir 
-defmodule Quicksort do
+  defmodule Quicksort do
+    @moduledoc """
+    Implementation of quicksort algorithm for sorting lists.
 
-  @spec sort([any]) :: [any]
-  def sort([]), do: []
-  def sort(array) do
-    [head | tail] = array
-    pivot = head
-    smaller = tail |> Enum.filter(&(&1 <= pivot))
-    greater = tail |> Enum.filter(&(&1 > pivot))
-    [sort(smaller) | [pivot | sort(greater)]] |> List.flatten
+    ## Examples
+
+      iex> Quicksort.sort([4,5,2,3,1])
+      [1,2,3,4,5]
+ 
+    """
+
+    @spec sort([any]) :: [any]
+    def sort([]), do: []
+    def sort(array) do
+      [head | tail] = array
+      pivot = head
+      smaller = tail |> Enum.filter(&(&1 <= pivot))
+      greater = tail |> Enum.filter(&(&1 > pivot))
+      [sort(smaller) | [pivot | sort(greater)]] |> List.flatten
+    end
   end
-end
 #+end_src
+
+This should go in =lib/quicksort.ex=.
 
 ** Building a test suite for ~Quicksort.sort~
 *** Properties
-To make sure that the sorting function is doing what we expect, we can create a test suite of properties that should hold true when a list has been sorted. Potential properties that a sorting algorithm should satisfy include:
-1. The result of sorting an already sorted list should be the same as the initial list[fn:3].
-  1a. The result of sorting a list with a single item is the single element list.
-2. The first element of a sorted list should be less than or equal to the last element of the list.
-3. The result of sorting a list with our sorting function should be the same as the result of sorting with Elixir's standard sorting function.
+To make sure that the sorting function is doing what we expect, we can create a test suite of properties that should hold true for sorted lists. We'll use the following properties (expressed in pseudocode) to test our quicksort:
+
++ Sorting an already sorted list is the same as the initial list[fn:3]. 
+#+BEGIN_SRC
+sort(sort(x)) == sort(x)
+#+END_SRC
++ Sorting a list with a single item results in the single element list.
+#+BEGIN_SRC
+sort([1]) == [1]
+#+END_SRC
++ The first element of a sorted list should be less than or equal to the last element of the list.
+#+BEGIN_SRC
+sorted = sort(aList)
+head(aList) <= last(aList)
+#+END_SRC
++ Sorting a list with our sorting function should give the same result as sorting with Elixir's standard sorting function.
+#+BEGIN_SRC
+Quicksort.sort(x) == sort(x)
+#+END_SRC
 
 *** ExCheck specific usage
 **** Properties
@@ -92,9 +180,10 @@ property :property_name do
   ...
 end
 #+END_SRC
+Inside of the block, we'll include our generators, (optionally) predicates, and property equations.
 
 **** Generators
-One of the nice things Haskell's QuickCheck has that we can't leverage in Elixir is using the type system to specify they types of the randomly generated function inputs. In ExCheck tests, we specify the arguments and their types inside of the ~property~ macro. These follow the format: 
+The generator is the first thing we specify inside of the ~property~ macro. These follow the format: 
 
 #+BEGIN_SRC elixir
 property :property_name do
@@ -104,7 +193,7 @@ property :property_name do
 end
 #+END_SRC
 
-ExCheck provides generators for[fn:4]:
+ExCheck provides generators for the following types[fn:4]:
 
 #+BEGIN_QUOTE
 - list/1, tuple/1, int/0, int/1, int/2, byte/0, real/0, sized/1, elements/1, any/0, atom/0, atom/1, choose/2, oneof/1, frequency/1, bool/0, char/0, return/1, vector/2, binary/1, binary/0, non\_empty/1, resize/2, non\_neg\_integer/0, pos\_integer/0,
@@ -112,8 +201,8 @@ ExCheck provides generators for[fn:4]:
 - bind/2, bindshrink/2, suchthat/2, pick/2, shrink/2, sample/1, sampleshrink/1, seal/1, open/1, peek/1, domain/3, shrink\_without\_duplicates/1
 #+END_QUOTE
 
-**** Specifying predicates
-Optionally, we can use the ~implies~ macro to supply predicates for the generated test data. 
+**** Specifying predicates (~implies~, ~such_that~)
+Optionally, we can use the ~implies~ macro to predicate the generated test data. 
 
 #+BEGIN_SRC elixir
 property :property_name do
@@ -125,7 +214,7 @@ property :property_name do
 end
 #+END_SRC
 
-We can use the ~implies~ macro to write a test for the third property we came up with previously, the head of a sorted list should be less than or equal to the last element. Without constraining the test input here, an src_erlang{ArgumentError} would be raised if we tried to call head on an empty list (src_elixir{hd([])}).
+The ~implies~ macro will be useful to write a test for the third property we came up with previously, the head of a sorted list should be less than or equal to the last element. Without constraining the test input here, an src_erlang{ArgumentError} would be raised if we tried to call head on an empty list (src_elixir{hd([])}).
 
 #+BEGIN_SRC elixir
   property :head_less_eql_to_tail do
@@ -138,30 +227,35 @@ We can use the ~implies~ macro to write a test for the third property we came up
   end
 #+END_SRC
 
-A potential drawback to using ~implies~ is that it generates the data up front and simply skips test runs on data that fail the predicate. Depending on the probability of generating data that satisy the condition, it's possible that an unsatisfactory number of runs would be skipped. An alternative is to define a generator using the ~such_that~ macro. 
+A potential drawback to using ~implies~ is that it generates the data up front and simply skips test runs on data that fail the predicate. Depending on the probability of generating data that satisy the condition, it's possible that a lot of runs could be skipped. An alternative is to define a generator using the ~such_that~ macro. 
 
-These take the form src_elixir{for_all :var in such_that(:var in :generator when :predicate) do}. Using ~such_that~, we could rewrite the previous test as:
+These take the form src_elixir{for_all :var in such_that(:var in :generator when :predicate) do}. Using ~such_that~, we could rewrite this test as:
 
 #+BEGIN_SRC elixir
   property :head_less_eql_to_tail_two do
+    # x can be any list of integers as long as it isn't empty
     for_all x in such_that(x in list(int) when x != []) do
       sorted = Quicksort.sort(x)
-      hd x <= List.last x
+      hd(sorted) <= List.last(sorted)
     end
   end
 #+END_SRC
 
-Now, we've written the generator so that all the data generated for the test satisfy the predicate. The tradeoff is that, if the generator is particularly complex, it will take longer to generate the data.
+Now, we've written the generator so that all the data generated for the test satisfy the predicate. The tradeoff is that, if the generator is particularly complex, it can take longer to generate the data.
 
 ** Testing
 
-So, we've got a quicksort implementation and we have some properties that we believe our quicksort should satisfy. 
+So, we've got a quicksort implementation (in =lib/quicksort.ex=), we have some properties that we believe our quicksort should satisfy, and we've seen the form that ExCheck tests should take. 
 
-To put it all together and test ~Quicksort.sort~, we'll:
+Let's put it all together and write our tests for ~Quicksort.sort~.
 
-1. src_elixir{use ExCheck} in ~quicksort_test.exs~
-2. Declare our properties using generators and predicates when necessary
-3. Run src_zsh{mix test --trace test/quicksort_test.exs} from the command line 
+First, we need to update ~test/test_helper.exs~ so that we can use ExCheck.
+#+BEGIN_SRC elixir
+ExUnit.start()         # This should be the only line in the file.
+ExCheck.start()        # Add this line.
+#+END_SRC
+
+Then, we'll replace ~test/quicksort_test.exs~ with the following (these are the properties we previously devised expressed as ExCheck tests):
 
 #+NAME: QuickSort tests
 #+begin_src elixir
@@ -171,21 +265,21 @@ To put it all together and test ~Quicksort.sort~, we'll:
     doctest Quicksort
 
     property :sort_is_idempotent do
-      for_all x in list(int) do           # Tell ExCheck how to generate data
+      for_all x in list(int) do           # Generate lists of integers
         sorted = Quicksort.sort(x)
-        Quicksort.sort(sorted) == sorted
+        Quicksort.sort(sorted) == sorted  # This is the property to test
       end
     end
 
     property :single_element_list_is_sorted do
-      for_all x in int do
-        Quicksort.sort([x]) == [x]
+      for_all x in int do                 # Generate single integers
+        Quicksort.sort([x]) == [x]        # Property test
       end
     end
 
     property :head_less_eql_to_tail do
-      for_all x in list(int) do
-        implies x != [] do                # Predicate for test data
+      for_all x in list(int) do           
+        implies x != [] do                # Predicate indicating we want to skip tests on empty lists
           sorted = Quicksort.sort(x)
           hd(sorted) <= List.last(sorted)
         end
@@ -193,57 +287,60 @@ To put it all together and test ~Quicksort.sort~, we'll:
     end
 
     property :head_less_eql_to_tail_two do
-      for_all x in such_that(x in list(int) when x != []) do
+      for_all x in such_that(x in list(int) when x != []) do # Generate test data without any empty lists
         sorted = Quicksort.sort(x)
-        hd x <= List.last x
+        hd(sorted) <= List.last(sorted)
       end
     end
 
     property :sorts_integers do
       for_all x in list(int) do
-        Quicksort.sort(x) == Enum.sort(x)
+        Quicksort.sort(x) == Enum.sort(x)  # Test against Elixir's sort 
       end
     end
 
     property :sorts_real_numbers do
-      for_all x in list(real) do
+      for_all x in list(real) do          # Generate lists of real numbers
         Quicksort.sort(x) == Enum.sort(x)
       end
     end
   end
 #+end_src
 
-Running these tests gives:
+We can now run our tests from the command line:
 #+BEGIN_SRC zsh
 $ mix test --trace test/quicksort_test.exs
 
 QuicksortTest
-  * test sort_is_idempotent_property (48.5ms)..................................
-.........................................................
-  * test sorts_real_numbers_property (10.1ms)..................................
-.........................................................
-  * test sorts_integers_property (12.5ms)......................................
-.....................................................
-  * test head_less_eql_to_tail_property (8.3ms).......x.....x..................
-.....x....................................................x..
-  * test head_two_property (10.0ms)............................................
-..............................................
-  * test single_element_list_is_sorted_property (1.1ms)........................
-...................................................................
+  * test sorts_real_numbers_property (23.1ms)..................................................
+    .........................................
+  * test head_less_eql_to_tail_property (14.6ms).x.............................................
+    .................x..............x............
+  * test single_element_list_is_sorted_property (1.0ms)........................................
+    ....................................................
+  * test sorts_integers_property (11.6ms)......................................................
+    ....................................
+  * test sort_is_idempotent_property (31.3ms)..................................................
+    ..........................................
+  * test head_less_eql_to_tail_two_property (10.4ms)...........................................
+    ...............................................
+  * test moduledoc at Quicksort (1) (0.02ms)
 
 
-Finished in 0.3 seconds
-601 tests, 0 failures
+Finished in 0.1 seconds
+606 tests, 0 failures
 
-Randomized with seed 53286
+Randomized with seed 339750
 #+END_SRC
 
 The ~x~'s in the output indicate tests that failed the ~implies~ predicate and were skipped.
 
-In this case, we got lucky and all of our tests passed. One of the most useful things about QuickCheck and its ports though is what happens when tests fail. 
+In this case, all of our tests passed. One of the most useful things about ExCheck and other QuickCheck ports though is what happens when tests fail. 
 
 *** Failure
-When tests fail, ExUnit attempts to shrink the generated input into a minimal example of failure. If we were to add a test to suite that should fail, *e.g.* with our ~Quicksort.sort~ function, a sorted list's head should be greater than its last element:
+When tests fail, ExCheck attempts to shrink the generated input into a minimal example of failure. 
+
+To demonstrate, we can add a test that we expect to fail, *e.g.* with our ~Quicksort.sort~ function, a sorted list's head should be *greater* than its last element:
 
 #+BEGIN_SRC elixir
   property :head_greater_than_tail do
@@ -276,14 +373,29 @@ Simplified:
 
 #+END_SRC
 
-ExCheck is telling us that our property doesn't hold up and it gives us an example of generated input that results in failure. In our property, we expected the head of the list to be greater than or equal to the last element; ~0 >= -1~ in this case. This is extremely useful for checking assumptions you've made about your code, discovering edge cases you hadn't considered, and general debugging.
+ExCheck is telling us that our property doesn't hold up and it gives us an example of input that results in failure. In our property, we expected the head of the list to be greater than or equal to the last element; ~0 >= -1~ in this case. Shrinking is extremely useful for checking assumptions you've made about your code, discovering edge cases you hadn't considered, sanity checking the properties themselves, and debugging in general.
 
 ** Conclusion
 I find property based testing to be a valuable tool for thoroughly testing code and helping me to uncover edge cases that I hadn't properly handled. Formalizing the properites that I want to test helps me to think about what it is I actually want my code to do.
 
 ExCheck provides a nice QuickCheck implementation for Elixir by leveraging triq, an existing Erlang QuickCheck port. By using ExCheck's ~properties~, ~generators~, and ~predicates~, you can add this powerful testing methodology to your repertoire.
 
+* Further Reading
++ QuickCheck: A Lightweight Tool for Random Testing of Haskell Programs :: Claessen & Hughes, 1999. [[http://www.eecs.northwestern.edu/~robby/courses/395-495-2009-fall/quick.pdf][pdf]]
++ QuickCheck: An Automatic Testing Tool for Haskell :: The QuickCheck user manual. http://www.cse.chalmers.se/~rjmh/QuickCheck/manual.html
++ Property-Based Testing Basics :: http://ferd.ca/property-based-testing-basics.html
++ Hypothesis Quick Start Guide :: Specifically for Python's Hypothesis, but still useful. https://hypothesis.readthedocs.io/en/master/quickstart.html 
+
+
 * Footnotes
+
+[fn:9] At the time of this writing, ExCheck 0.3.0 crashes at the end of test runs in the newly released released Elixir 1.3.0. I've submitted a patch, but until it's fixed upstream you can use src_elixir{{:excheck, github: "tpoulsen/excheck", only: :test},} instead of v0.3.0 if you're using elixir 1.3.0.
+
+[fn:8] You'll need a working version of Elixir to follow along.
+
+[fn:7] More on this in the section about ExCheck.
+
+[fn:6] Examples in this section use Haskell syntax.
 
 [fn:5] Perhaps not incidentally, [[https:hypothesis.works][Hypothesis]] is the name of the de-facto property based testing framework for Python.
 
