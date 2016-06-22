@@ -2,14 +2,22 @@
 title: Property Based Testing in Elixir
 ---
 
-* Abstract
-Property based testing is a testing methodology in which the developer describes properties that the tested code should satisfy. Along with the properties, the developer describes the data that should be generated to test these properties. The testing framework uses the generator to derive the inputs used to test whether the code satisfies the given properties.
+* Abstract/TL;DR
+When using property based testing, a developer describes properties about his or her code that should always hold true. QuickCheck style testing frameworks use random data, derived via user supplied generators, to repeatedly test the defined properties. In this way, a single property test can result in hundreds of test runs against a random sample of possible inputs.
 * Introduction
-Properly testing code is difficult. I find that, for personal projects, I often end up neglecting rigorous testing in favor of banging away at the code I write in a repl because that is easier to do than coming up with appropriate test cases that fully cover the potential inputs to the functions[fn:1]. I find that property based testing provides the right balance of power to time to make it entirely worthwhile.
+Testing code is difficult. Setting tests up takes away time that could be spent on new development. Write tests requires thinking long and hard about the entirety of inputs that could be supplied as arguments to the tested functions. To effectively write tests, one must think about how to *break* the code he or she has written. It isn't enough to write example tests that cover the best-case or most obvious scenarios. 
 
-Property based testing was popularized by Haskell's [[https://hackage.haskell.org/package/QuickCheck-2.8.2/docs/Test-QuickCheck.html][QuickCheck]] library. Since its debut in 1999, QuickCheck, or at least its ideas, has been ported to [[http://hypothesis.works/articles/quickcheck-in-every-language/][many languages]]. In QuickCheck and property based tests in general, one specifies properties or laws about his or her functions that should hold to be true. Given a Boolean property, *e.g.* src_haskell{x + y == y + x} and a type declaration src_haskell{Int -> Int -> Bool}, QuickCheck can generate random inputs that match the type declaration to test the property's validity (by default, it generates data for and runs 100 tests; this is user configurable). Should a test fail, QuickCheck shrinks the test case to find the smallest value that produces a failing result. For functions that operate on more complex types, users can write generators that tell QuickCheck how to randomly create test data.
+A good test suite is like a hypothesis[fn:5] that the code functions as it should. It's up to the developer to write tests that attempt to disprove this hypothesis. Thousands of test cases can indicate that everything is well written and behaving as it should. The developer must try to find the one case of malformed input or an unexpected argument that will cause the system to crash. 
 
-The difficult part of property based testing is coming up with the properties themselves. I find this to be a beneficial exercise though, as it makes me think about what it is that I really want a particular function to do. Some example properties[fn:2]:
+That said, I find that for personal projects I often end up neglecting rigorous automated testing. Instead, I tend to bang away in a repl because there's less up front cost to that than coming up with appropriate test cases that fully cover the potential inputs to the functions[fn:1]. As opposed to more traditional example based testing (perform some set up, add a few carefully crafted examples, and check that the results equal some expected outcome), I find that property based testing provides the right balance of power to time to make it entirely worthwhile.
+
+Property based testing was popularized by Haskell's [[https://hackage.haskell.org/package/QuickCheck-2.8.2/docs/Test-QuickCheck.html][QuickCheck]] library. Since its debut in 1999, QuickCheck has been ported in some capacity to [[http://hypothesis.works/articles/quickcheck-in-every-language/][many languages]]. In property based tests, one specifies properties about his or her functions that should always hold true. Each property is tested against a large number of random inputs; in this way, a single property is tested with very large inputs, very small inputs, empty lists, unicode characters, binary data, etc. as appropriate based on the provided data types.
+
+The difficult part of property based testing is coming up with the properties themselves. I find this to be a beneficial exercise though, as it makes me think about what it is that I really want a particular function to do.
+
+** Haskell/QuickCheck example
+
+Given a Boolean property, *e.g.* src_haskell{x + y == y + x} and a type declaration src_haskell{Int -> Int -> Bool}, QuickCheck can generate random inputs that match the type declaration to test the property's validity (by default, it generates data for and runs 100 tests; this is user configurable). Should a test fail, QuickCheck shrinks the test case to find the smallest value that produces a failing result. For functions that operate on more complex types, users can write generators that tell QuickCheck how to randomly create test data. Some example properties[fn:2]:
 
 #+BEGIN_SRC haskell
 -- Reversing a list twice is the same as the original list.
@@ -273,9 +281,11 @@ ExCheck is telling us that our property doesn't hold up and it gives us an examp
 ** Conclusion
 I find property based testing to be a valuable tool for thoroughly testing code and helping me to uncover edge cases that I hadn't properly handled. Formalizing the properites that I want to test helps me to think about what it is I actually want my code to do.
 
-ExCheck provides a nice QuickCheck implementation for Elixir by leveraging triq, an existing Erlang QuickCheck port. By using ExChec's ~properties~, ~generators~, and ~predicates~, you can add this powerful testing methodology to your repertoire.
+ExCheck provides a nice QuickCheck implementation for Elixir by leveraging triq, an existing Erlang QuickCheck port. By using ExCheck's ~properties~, ~generators~, and ~predicates~, you can add this powerful testing methodology to your repertoire.
 
 * Footnotes
+
+[fn:5] Perhaps not incidentally, [[https:hypothesis.works][Hypothesis]] is the name of the de-facto property based testing framework for Python.
 
 [fn:4] https://github.com/parroty/excheck#generators 
 
@@ -283,4 +293,4 @@ ExCheck provides a nice QuickCheck implementation for Elixir by leveraging triq,
 
 [fn:2] By convention, QuickCheck properties begin with =prop_=.
 
-[fn:1] It has not been lost on me that putting what often ends up being the same few commands run in the repl into a test-suite would ultimately end up saving me time.
+[fn:1] It is not lost on me that automating what often ends up being the same few commands run in the repl in a test-suite would ultimately end up saving me time.
