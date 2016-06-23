@@ -23,7 +23,7 @@ bodyStyle =
     color      black
     fontSize   (px 16)
     margin     (px 0) auto (px 0) auto
-    width      (px 900)
+    width      (pct 80)
     fontFamily ["Century Gothic", "Arial", "Helvetica"] [sansSerif]
     fontSize   (em 1)
     lineHeight (em 1.5)
@@ -95,10 +95,11 @@ articleStyle =
     display            $ other "flex"
     "flex-direction"  -: "row-reverse"
     "justify-content" -: "flex-end"
+    "flex-wrap"       -: "wrap"
     section # ".toc" <? do
-      "flex" -: "1"
+      "flex" -: "0 3 20%"
     section # ".post-body" <? do
-      "flex" -: "3"
+      "flex" -: "3 0 80%"
 
 tableOfContentsStyle :: Css
 tableOfContentsStyle =
