@@ -15,6 +15,7 @@ codeBlockStyle =
   pre ? do
     backgroundColor "#fdf6e3"
     padding         (px 10) (px 10) (px 10) (px 10)
+    overflowX       scroll
     code <? do
       fontFamily    ["Monoid", "Fira Code"] [monospace]
       fontSize      (em 0.8)
