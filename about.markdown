@@ -9,3 +9,5 @@ Professionally, I develop Rails and Javascript applications.
 ## Contact
 I'm [\@travnation](https://twitter.com/travnation) on twitter and [tpoulsen](https://github.com/tpoulsen) on github.
 
+You can email me at <blog@travispoulsen.com>.
+
