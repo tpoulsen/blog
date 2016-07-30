@@ -5,6 +5,8 @@ tags: elixir, haskell, testing, quickcheck
 
 * TL;DR
 Property based testing lets the developer describes properties about his or her code that should always hold true. QuickCheck style testing frameworks use random data, derived from user supplied generators, to repeatedly test these properties. In this way, a single property test can result in hundreds of test runs against a random sample of possible inputs. ExCheck is an Elixir library for property based testing. 
+
+/Last edited:/ 2016-07-29
 * Introduction
 Testing code is difficult. Writing effective tests requires thinking about how to actually *break* the tested code. It isn't enough to write example tests that cover the best-case or most obvious scenarios. Instead, it is necessary to consider the entirety of the function's domain and determine which arguments are the best for covering both the desired functionality and edge cases.
 
@@ -81,16 +83,16 @@ To demonstrate its use, we'll create a new Elixir project for an implementation 
 We'll start by creating a new project using src_zsh{mix new}:
 #+BEGIN_SRC zsh
 $ mix new quicksort
-* creating README.md
-* creating .gitignore
-* creating mix.exs
-* creating config
-* creating config/config.exs
-* creating lib
-* creating lib/quicksort.ex
-* creating test
-* creating test/test_helper.exs
-* creating test/quicksort_test.exs
+  * creating README.md
+  * creating .gitignore
+  * creating mix.exs
+  * creating config
+  * creating config/config.exs
+  * creating lib
+  * creating lib/quicksort.ex
+  * creating test
+  * creating test/test_helper.exs
+  * creating test/quicksort_test.exs
 
 Your Mix project was created successfully.
 You can use "mix" to compile it, test it, and more:
@@ -389,7 +391,7 @@ ExCheck provides a nice QuickCheck implementation for Elixir by leveraging triq,
 
 * Footnotes
 
-[fn:9] At the time of this writing, ExCheck 0.3.0 crashes at the end of test runs in the newly released released Elixir 1.3.0. I've submitted a patch, but until it's fixed upstream you can use src_elixir{{:excheck, github: "tpoulsen/excheck", only: :test},} instead of v0.3.0 if you're using elixir 1.3.0.
+[fn:9] At the time of this writing, ExCheck 0.3.0 crashes at the end of test runs in the newly released released Elixir 1.3.0. I've submitted a patch, but until it's fixed upstream you can use src_elixir{{:excheck, github: "tpoulsen/excheck", only: :test},} instead of v0.3.0 if you're using elixir 1.3.0. /Edit: 2016-07-29/ As of v0.4.0, ExCheck works with Elixir v.1.3 and up.
 
 [fn:8] You'll need a working version of Elixir to follow along. /Edit: 2016-06-23/ If you'd rather download the project, it's available at https://github.com/tpoulsen/quicksort.
 
