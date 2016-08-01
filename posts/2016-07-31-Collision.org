@@ -1,0 +1,103 @@
+---
+title: Collision, an Elixir library for polygon collision detection
+tags: elixir, game dev
+---
+
+* TL;DR
+I published the first version of a collision detection library I'm working on. It's on [[https://hex.pm/packages/collision][hex]] and [[https://github.com/tpoulsen/collision][Github]].
+
+* Background
+Two years ago I made a small Asteroids-inspired, 2D, single-player space shooter in [[https://elm-lang.org][Elm]] that I called [[https://travispoulsen.com/cardinalPew.html][CardinalPew]]. It was a good introduction to Elm, functional reactive programming, and making graphical games.
+
+One of the more interesting parts of the development was implementing collision detection. I was checking for collisions between the player and enemeies, projectiles from the player's various weapons and enemies, and shrapnel from blown up enemeies and other enemies. In the naive approach, I used the radii of the polygons that I was checking and, if their midpoints were less than the sum of their radii, it was close enough to call it a collision. It worked, but it was obvious when playing the game that it wasn't ideal. Because all the polygons were assumed to be roughly circular, there would be collision checks that passed that shouldn't have. Whether it was an enemy hitting the player and causing a game over, or a bullet hitting an enemy, when objects that didn't appear to be colliding caused game state changes, it was noticeable and it reduced the game's fun. 
+
+** Separating Axis Theorem
+Researching collision detection algorithms led me to the separating axis theorem. The separating axis theorem states that for two convex polygons, if a line (axis) exists where projections of the two polygons onto the axis are not overlapping, then the polygons aren't colliding. 
+
+#+BEGIN_HTML
+<img src="/images/separating-axis.png" /> 
+#+END_HTML
+/The dotted lines indicate the projections of the polygons onto the green axis. Because they don't overlap, the polygons aren't colliding./
+
+The general algorithm to check for collision is:
+
++ Generate test axes by taking the normal vectors of all of the sides of both polygons.
++ Project the polygons onto all of the axes.
+  + Check whether the projections overlap with one another.
+    + If at any point they don't overlap, you're done -- there is no collision.
+    + If all the projections overlap, then the polygons are colliding.
+ 
+If all you care about is whether the objects are colliding, you can stop here and return a simple ~true | false~.
+
+You can also calculate the minimum translation vector (MTV). This is the smallest directed movement that's required to get the polygons out of collision. To find it[fn:1], you have to find the axis that has the minimum amount of overlap between the projections. You can use the axis and the amount of overlap to move one of the objects so that they are no longer colliding.
+
+* Collision, v0.2.0
+With that background in place, I've recently been working on a library for collision detection in Elixir. My ultimate goal with this project is to make some small networked games, so having server-side collision detection is going to be essential for that. The initial implementation[fn:2] includes modules for working with regular polygons and vectors. It also includes collision detection for 2D regular polygons via the separating axis theorem and collision resolution via the MTV.
+
+Using ~Collision~ looks like this[fn:3]:
+
+Polygons are described by their number of sides, radius, rotation angle, and midpoint:
+#+BEGIN_SRC elixir :session collision
+  # 4 sides, radius of 5, rotated 98 degrees, midpoint at {5, 8}
+  iex> polygon_1 = Collision.two_dimensional_polygon({4, 5, 98, {5, 8}})
+  %RegularPolygon{n_sides: 4, radius: 5, rotation_angle: 0.01745, midpoint: %{x: 5, y: 8}}
+
+  iex> polygon_2 = Collision.two_dimensional_polygon({8, 8, 50, {6, 2}})
+  %RegularPolygon{n_sides: 8, radius: 8, rotation_angle: 0.08727, midpoint: %{x: 6, y: 2}}
+#+END_SRC
+
+Plotting these polygons looks like this:
+#+BEGIN_HTML
+<img src="/images/polygon-collision.png" /> 
+#+END_HTML
+/The square is ~polygon_1~, the octagon ~polygon_2~. They are obviously overlapping each other, so we expect that our collision detection function will return ~true~./
+
+There is a ~Collidable~ protocol that defines the functions ~collision?~, ~resolution~, and ~resolve_collision~. Regular polygons implement this protocol.
+#+BEGIN_SRC elixir :session collision
+  # Test for collision
+  iex> collision = Collidable.collision?(polygon1, polygon2)
+  true
+#+END_SRC
+
+This is the result we expected; they're colliding with each other.
+
+The next step is to get them out of collision:
+#+BEGIN_SRC elixir :session collision
+  # Get the minimum translation vector and magnitude to resolve the collision
+  iex> {mtv, magnitude} = Collidable.resolution(polygon1, polygon2)
+  {%Vector{x: -0.4621752728736494, y: 0.8867885977752351}, 6.083859719189924}
+
+  # Carry out the resolution by moving polygon 2 so that it is no longer in collision
+  iex> {polygon_1, updated_polygon2} = Collidable.resolve_collision(polygon1, polygon2)
+  {%RegularPolygon{n_sides: 4, radius: 5, rotation_angle: 0.01745, midpoint: %{x: 5, y: 8}},
+   %RegularPolygon{n_sides: 8, radius: 8, rotation_angle: 0.08727, midpoint: %{x: 8.811809525841607, y: -3.3950974294416687}}}
+#+END_SRC
+
+This demonstrates what is happening in the collision resolution:
+
+#+BEGIN_HTML
+<img src="/images/polygon-translation.png" /> 
+#+END_HTML
+
+Using the minimum translation vector and magnitude from ~Collidable.resolution~, we can move either ~polygon_1~ or ~polygon_2~ to get them out of collision. ~Collidable.resolve_collision~ moves ~polygon_2~, so we negate the MTV and use it to translate ~polygon_2~; this translation is the blue octagon. The black line is the translation vector applied to ~polygon_2~'s midpoint. After moving ~polygon_2~, the objects are no longer colliding.
+
+So, we were able to determine programtically that the polygons were colliding, then move them out of collision.
+
+* Conclusion
+The separating axis theorem is a very useful tool for detecting collisions between objects. Becaues any axis without overlapping projections causes it to immediately determine that there is no collision, it can fail fast, reducing the time and power needed to detect collision; this is very useful as the number of objects that one has to check for collisions grows.
+
+Next on my roadmap for ~collision~ is handling some special cases that can further increase the speed of collision detection (/e.g./ quadrilaterals only require checking two of their axes instead of all four). I'm also planning on extending the initial implementation to 3D objects in the near future. Before too long, I'll start plugging it into some small games to get my feet wet with networked gaming.
+
+* References
++ SAT (Separating Axis Theorem) :: http://www.dyn4j.org/2010/01/sat/
++ Paul's Online Math Notes - Calculus II :: Helpful for refreshing knowledge on vectors and developing property tests for them. http://tutorial.math.lamar.edu/Classes/CalcII/CalcII.aspx 
+
+
+
+* Footnotes
+
+[fn:3] The API isn't completely stable yet, so breaking changes are likely.
+
+[fn:2] v0.2.0 is available on [[https://hex.pm/packages/collision][hex]]; documentation is available there as well.
+
+[fn:1] If you are trying to calculate the MTV, it does change how you need to generate the test axes; in addition to getting the normal vectors, you will also want to normalize them. For more on the actual implementation, [[http://www.dyn4j.org/2010/01/sat/][this]] is a fantastic article.
