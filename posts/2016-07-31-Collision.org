@@ -7,7 +7,7 @@ tags: elixir, game dev
 I published the first version of a collision detection library I'm working on. It's on [[https://hex.pm/packages/collision][hex]] and [[https://github.com/tpoulsen/collision][Github]].
 
 * Background
-Two years ago I made a small Asteroids-inspired, 2D, single-player space shooter in [[https://elm-lang.org][Elm]] that I called [[https://travispoulsen.com/cardinalPew.html][CardinalPew]]. It was a good introduction to Elm, functional reactive programming, and making graphical games.
+Two years ago I made a small Asteroids-inspired, 2D, single-player space shooter in [[http://elm-lang.org][Elm]] that I called [[https://travispoulsen.com/cardinalPew.html][CardinalPew]]. It was a good introduction to Elm, functional reactive programming, and making graphical games.
 
 One of the more interesting parts of the development was implementing collision detection. I was checking for collisions between the player and enemeies, projectiles from the player's various weapons and enemies, and shrapnel from blown up enemeies and other enemies. In the naive approach, I used the radii of the polygons that I was checking and, if their midpoints were less than the sum of their radii, it was close enough to call it a collision. It worked, but it was obvious when playing the game that it wasn't ideal. Because all the polygons were assumed to be roughly circular, there would be collision checks that passed that shouldn't have. Whether it was an enemy hitting the player and causing a game over, or a bullet hitting an enemy, when objects that didn't appear to be colliding caused game state changes, it was noticeable and it reduced the game's fun. 
 
