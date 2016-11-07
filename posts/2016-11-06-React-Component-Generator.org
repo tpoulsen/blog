@@ -1,0 +1,143 @@
+---
+title: React Component Generator
+tags: haskell, react, react native
+---
+
+* TL;DR
+  I like React for building application front-ends but I dislike the boilerplate that comes with making new components.
+  This is especially tedious when writing many small components and composing them to make more complex interfaces.
+
+  I wrote a component generator to ease some of the boilerplate induced friction. It can generate scaffolds for React and React Native components.
+
+  The application can be found on [[https://github.com/tpoulsen/generate-component][github]].
+
+* Background
+  I've been using [[https://facebook.github.io/react/][React]] for the last two years to build front-ends for web applications; I've recently picked up [[https://facebook.github.io/react-native/][React Native]] for mobile development.
+
+  I believe that using small, composable components makes for a better development experience and ultimately results in more maintainable systems.
+
+  I find that setting up new components largely entails writing the same boilerplate: imports, exports, the component skeleton, etc...
+
+  To save myself time writing the largely repetitive setup code, I made a command line component generator. It can generate a component with a user supplied name in an optionally provided directory (it defaults to ~./app/components/~).
+  It generates regular React components by default, but with a flag will instead make React Native components. Another flag makes it additionally generate a [[https://github.com/reactjs/redux][Redux]] / [[https://github.com/reactjs/react-redux][React-Redux]] container component.
+
+* generate-component
+** Implementation
+   I wrote the generator in Haskell. A large part of the reason behind this was to try out the [[https://hackage.haskell.org/package/turtle-1.2.8][turtle]] shell scripting library.
+
+   ~turtle~ was overall quite nice to use. Its [[https://hackage.haskell.org/package/turtle-1.2.8/docs/Turtle-Tutorial.html][tutorial]] is well written and extensive, which made getting started with the library very easy. As this project largely deals with src_haskell{IO}, ~turtle~ also made those aspects of the project easy to work with.
+
+   In the initial version of the program, I used ~Turtle.Options~ to build a parser for the command line arguments. This provides some convenient abstractions over the functionality of [[https://hackage.haskell.org/package/optparse-applicative-0.13.0.0][Options.Applicative]]. In the end I needed some of the features in ~Options.Applicative~ that ~Turtle.Options~ doesn't include (specifically, providing a default argument for an optional parameter).
+
+   ~Options.Applicative~ was also quite nice to use; it also has a great tutorial/README.
+
+   The main functionality of the application consists of determining which files to generate based on the command line arguments, writing the appropriate files, and replacing placeholder text in the templates with the new component's name.
+
+   The templates are written in a module that uses the ~QuasiQuotes~ language extension; this allows for nice multi-line strings.
+   Along with the filename associated with the template content, these form the type src_haskell{Template}:
+
+   #+BEGIN_SRC haskell
+     {-# LANGUAGE OverloadedStrings #-}
+     {-# LANGUAGE QuasiQuotes       #-}
+     module Templates where
+
+     import           Data.String.QQ
+     import           Data.Text      (Text)
+
+     data Template = Template
+       { filename :: Text
+       , contents :: Text
+       }
+
+     componentTemplate :: Template
+     componentTemplate = Template "COMPONENT.js" [s|
+     // @flow
+     /*
+        NOTE: This file was auto-generated for a component
+        named "COMPONENT"; it is intended to be modified as
+        needed to be useful.
+     ,*/
+
+     import React, {PropTypes} from 'react';
+     import {render} from 'react-dom';
+
+     const COMPONENT = ({}) => (
+       <div>
+       </div>
+     );
+
+     COMPONENT.PropTypes = {
+     };
+
+     export default COMPONENT;
+     |]
+   #+END_SRC
+   
+   In each template, the text /COMPONENT/ stands in for the component's name; it is replaced with the correct name when the generator is run. Otherwise, the templates are straightforward; they make a few imports, set up the component skeleton, set up the proptypes skeleton, and export the component.
+   The [[https://github.com/tpoulsen/generate-component/blob/master/src/Templates.hs][other]] templates are quite similar.
+
+** Usage
+   The easiest method of installation is with [[https://docs.haskellstack.org/en/stable/README/][Stack]]:
+
+   #+BEGIN_SRC sh
+     stack install
+     # ... Output omitted for brevity ... #
+     Copied executables to $HOME/.local/bin:
+     - generate-component
+   #+END_SRC
+
+   
+   With the program installed, it can then be used to generate components:
+   #+BEGIN_SRC sh
+     ~/.local/bin/generate-component -h
+     Component generator
+
+     Usage: generate-component NAME [-d|--component-directory DIR]
+     [-c|--make-container] [-n|--react-native]
+
+     Available options:
+     -h,--help                Show this help text
+     -d,--component-directory DIR
+     Directory to add the component
+     -c,--make-container      Create a container component
+     -n,--react-native        Create a React Native componen
+   #+END_SRC
+
+   Generating a React component:
+
+   #+BEGIN_SRC sh
+    ~/.local/bin/generate-component Test
+    Making directory at: ./app/components/Test
+    Copying files...
+    Writing ./app/components/Test/Test.js...
+    Writing ./app/components/Test/styles.js...
+    Writing ./app/components/Test/index.js...
+    Done
+   #+END_SRC
+     
+   Generating a React component in an arbitrary directory:
+   #+BEGIN_SRC  sh
+     ~/.local/bin/generate-component -d dir Test
+     Making directory at: dir/Test
+     Copying files...
+     Writing dir/Test/Test.js...
+     Writing dir/Test/index.js...
+     Done
+   #+END_SRC
+   
+   If you attempt to create a component with the same name as an existing component, the program exists without doing anything:
+   #+BEGIN_SRC  sh
+     ~/.local/bin/generate-component -cn Test
+     Component directory exists; exiting without action.
+     Done
+   #+END_SRC
+
+   More details on specific usage can be found in the README for the [[https://github.com/tpoulsen/generate-component][project]].
+
+* Conclusion
+  Personally, this should make my life easier when working with React. Hopefully it does the same for someone else!
+
+* Further Reading
+  + [[http://www.haskellforall.com/2015/01/use-haskell-for-shell-scripting.html][Use Haskell for shell scripting]] :: Gabriel Gonzalez, creator of turtle
+  + [[https://episodes.functionalgeekery.com/functionalgeekery_72_gabriel_gonzalez.mp3?ptm_source=download&ptm_context=select-button&ptm_file=functionalgeekery_72_gabriel_gonzalez.mp3#][Functional Geekery ep. 72 - Gabriel Gonzalez]] :: 
+
