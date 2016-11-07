@@ -5,4 +5,7 @@ _cache
 _site
 posts.bk
 drafts
+*.hi
+*.o
+site
 
