@@ -1,0 +1,61 @@
+---
+title: Fifty/Fifty 
+tags: computer science, literature, learning
+---
+* From Turing to typed lambda calculus, abstract syntax trees to algebraic data types
+My education is not in computer science. While I took a computer science/C++ course in high school, in college and grad school I studied evolutionary biology. Eventually, I found my way back to programming by way of bioinformatics and data analysis. As a result, I've been self-educated when it comes to programming and development. 
+
+Given my background, I've always wondered what I was missing as far as foundational computer science goes. Last year, I was inspired by [[https://blog.acolyer.org/2016/07/22/end-of-term-and-the-power-of-compound-interest/][this post]] at [[https://blog.acolyer.org][the morning paper]]; around that time, I came up with the following plan to work on shoring up my computer science knowledge base.
+
+** The plan
+Over the next fifty weeks[fn:1], I'm going to read and summarize my notes/thoughts on fifty "key" papers on computer science. I currently have a list of 38 papers that I've pulled from my larger "to-read" list; this will serve as my starting point. I'm sure the list will grow by the time I run out.
+
+As it reflects my interests, the reading list I've put together definitely skews toward functional programming, programming languages, and types. That said, I'll happily take suggestions for papers!
+
+* The Papers
+These are the 38 papers that I'm starting with[fn:2], ordered by publication year. This is roughly the order that I intend to work through the list.
+
++ Church, A. (1936). An Unsolvable Problem of Elementary Number Theory. American Journal of Mathematics, 58(2), 345–363. http://doi.org/10.1007/s13398-014-0173-7.2
++ Turing, A. M. (1938). On computable numbers, with an application to the entscheidungsproblem. a correction. Proceedings of the London Mathematical Society, s2-43(1), 544–546. http://doi.org/10.1112/plms/s2-43.6.544
++ McCarthy, J. (1960). Recursive functions symbolic expressions and their computation by machine, Part I. Communications of the ACM, 3(4), 184–195. http://doi.org/10.1145/367177.367199
++ Edmonds, J. (1965). Paths, trees, and flowers. Journal Canadien de Mathématiques, 17, 449–467. http://doi.org/10.4153/CJM-1965-045-4
++ Landin, P. J. (1966). The Next 700 Programming Languages. Commun. ACM, 9(3), 157–166. http://doi.org/10.1145/365230.365257
++ Hoare, C. A. R. (1969). An Axiomatic Basis for Computer Programming. Communications of the ACM, 12(10), 576–580. http://doi.org/10.1145/363235.363259
++ Dijkstra, E. W. (1974). Self-stabilizing systems in spite of distributed control. Communications of the ACM, 17(11), 643–644. http://doi.org/10.1145/361179.361202
++ Liskov, B. H., & Zilles, S. N. (1975). Specification Techniques For Data Abstractions. IEEE Transactions on Software Engineering, SE-1(1), 7–19. http://doi.org/10.1109/TSE.1975.6312816
++ Backus, J. (1978). Can programming be liberated from the von Neumann style?: a functional style and its algebra of programs. Communications of the ACM, 21(8), 613–641. http://doi.org/10.1145/359576.359579
++ Milner, R. (1978). A theory of type polymorphism in programming. Journal of Computer and System Sciences, 17(3), 348–375. http://doi.org/10.1016/0022-0000(78)90014-4
++ Darnas, L., & Milner, R. (1982). Principle type-schemes for functional programs, 207–212.
++ Cardelli, L. (1984). Compiling a Functional Language. Proceedings of the 1984 ACM Symposium on LISP and Functional Programming - LFP ’84, 208–217. http://doi.org/10.1145/800055.802037
++ Lampson, B. W. (1984). Hints for Computer System Design. IEEE Software, 1(1), 11–28. http://doi.org/10.1109/MS.1984.233391
++ Thompson, K. (1984). Reflections on trusting trust. Turing Award Lecture. http://doi.org/10.1145/777313.777347
++ Reynolds, J. C. (1988). Definitional Interpreters for Higher-Order Programming Languages. Higher Order Symbol. Comput., 2(30602), 363–397. http://doi.org/http://dx.doi.org/10.1023/A:1010027404223
++ Hughes, J. (1989). Why functional programming matters. The Computer Journal, 32(April 1989), 1–23. http://doi.org/10.1093/comjnl/32.2.98
++ Meijer, E., Fokkinga, M., & Paterson, R. (1991). Functional Programming with Bananas, Lenses, Envelopes and Barbed Wire. Functional Programming Languages and Computer Architecture, 124–144. http://doi.org/10.1007/3540543961_7
++ Wright, A. K., & Felleisen, M. (1994). A syntactic approach to type soundness. Information and Computation, 115(1), 38–94. http://doi.org/10.1006/inco.1994.1093
++ Hartmanis, J., & Stearns, R. E. (1995). On the computational complexity of algorithms. ACM Computing Surveys, 27(2), 287–289. http://doi.org/10.1145/210376.210406
++ Razborov, A. a, & Rudich, S. (1997). Natural Proofs. Journal of Computer and System Sciences, 55(1), 24–35. http://doi.org/10.1006/jcss.1997.1494
++ Strachey, C. (2000). Fundamental Concepts in Programming Languages. Higher Order Symbol. Comput., 13, 11–49. http://doi.org/10.1023/A:1010000313106
++ Wadler, P. (2001). Monads for functional programming, (August 1992).
++ Benveniste, A., Caspi, P., Edwards, S. A., Halbwachs, N., Le Guernic, P., & De Simone, R. (2003). The synchronous languages 12 years later. Proceedings of the IEEE, 91(1), 64–83. http://doi.org/10.1109/JPROC.2002.805826
++ Courtney, A., Haven, N., Nilsson, H., & Peterson, J. (2003). The Yampa Arcade ∗.
++ Meijer, E., & Drayton, P. (2004). Static typing where possible, dynamic typing when needed: The end of the cold war between programming languages. Revival of Dynamic Languages.
++ Lindahl, T., & Sagonas, K. (2006). Practical type inference based on success typings. Proceedings of the 8th ACM SIGPLAN Symposium on Principles and Practice of Declarative Programming - PPDP ’06, 167. http://doi.org/10.1145/1140335.1140356
++ Turner, D. (2006). Church’s thesis and functional programming. Church’s Thesis after 70 Years, 70(1936), 518–544. Retrieved from http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.106.5271&amp;rep=rep1&amp;type=pdf\nhttp://www.cs.kent.ac.uk/people/staff/dat/miranda/ctfp.pdf
++ Armstrong, J. (2007). A History of Erlang. … Conference on History of …, 12(212), 1–55. http://doi.org/10.1145/1238844.12388
++ Johann, P., & Ghani, N. (2008). Foundations for structured programming with GADTs. ACM SIGPLAN Notices, 43(1), 297. http://doi.org/10.1145/1328897.1328475
++ Elliott, C. (2009). Denotational design with type class morphisms. For Submission February 2009b UR L Httpconal Netpaperstypeclassmorphisms, http(2009–1), 1–13. Retrieved from http://conal.net/papers/type-class-morphisms/type-class-morphisms.pdf
++ Elliott, C. (2009). Push-pull functional reactive programming. Proceedings of the 2nd ACM SIGPLAN Symposium on Haskell - Haskell ’09, 25. http://doi.org/10.1145/1596638.1596643
++ Letia, M., Preguiça, N., & Shapiro, M. (2009). CRDTs: Consistency without concurrency control.
++ Mcbride, C. (2011). FUNCTIONAL PEARL Kleisli arrows of outrageous fortune. Personalcisstrathacuk, (March), 1–14. Retrieved from http://personal.cis.strath.ac.uk/~conor/Kleisli.pdf
++ Smallbone, N. (2011). Property-based testing for functional programs, 117. Retrieved from http://www.cse.chalmers.se/~nicsma/lic.pdf
++ Keshav, S. (2013). How to Read a Paper. Work, 2–3. http://doi.org/10.1145/1273445.1273458
++ Wadler, P. (2014). Propositions as Types. http://doi.org/10.1093/mind/fzr011
++ Blelloch, G. E. (n.d.). Programming Parallel Algorithms. Work, 1–25.
++ Henderson, P. (n.d.). Functional Geometry.
+
+* Footnotes
+
+[fn:2] This is pretty much just a dump of citations from my Mendeley library; there may be some inaccuracies for papers that weren't matched correctly in their database.
+
+[fn:1] Give or take; life will certainly get in the way. Realistically, I'll be happy if I get through 25 papers over the next year.
