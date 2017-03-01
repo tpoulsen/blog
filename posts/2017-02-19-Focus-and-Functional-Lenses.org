@@ -1,0 +1,307 @@
+---
+title: Focus, an Elixir library for functional lenses
+tags: elixir, lenses, functional programming
+---
+
+* TL;DR
+I'm working on a lightweight lens library for Elixir. The library is on [[https://hex.pm/packages/focus][Hex]] and the project is on [[https://github.com/tpoulsen/focus][GitHub]].
+
+* Introduction
+As far as definitions for lenses go, this one from the Racket documentation is very straightforward[fn:1]: 
+
+#+BEGIN_QUOTE
+A lens is a value that composes a getter and a setter function to produce a bidirectional view into a data structure. This definition is intentionally broad—lenses are a very general concept, and they can be applied to almost any kind of value that encapsulates data.
+  -- [[https://docs.racket-lang.org/lens/lens-intro.html][Racket 'lens' documentation]]
+#+END_QUOTE 
+
+Generally, a lens provides a way to both get and set some piece of data inside of a data structure. Lenses can do three primary things lenses to the data onto which they focus:
+
+1) view the data
+2) apply an arbitrary function to the data
+3) set a new value inside the data structure[fn:2]
+
+For a lens to be considered 'well-behaved', there are three laws that it must obey:
+
+1) Put - Get: If you set a value, you should be able to get it back out
+   + ~get l (put l v s) == v~
+2) Get - Put: If you get a value and set it to the same thing, there is no change
+   + ~put l (get l s) s == s~
+3) Put - Put: If you set two things in succession, the final value is result of the second setting
+   + ~put l x (put l y s) == put l x s~
+
+Focus currently implements versions of lenses and prisms. The functionality is inspired by [[https://hackage.haskell.org/package/lens-4.15.1][Edward Kmett's lens]] library and the [[https://docs.racket-lang.org/lens/index.html][Racket lens]] library.
+
+* Mutable and Immutable Data Structures
+Lenses are particularly useful when working with immutable, deeply nested data structures.
+
+In languages with mutable data structures, changing values in deeply nested structures is easy:
+
+#+BEGIN_SRC ruby
+  marge = {
+    address: {
+      street: {
+        number: 742,
+        name: "Evergreen Terrace"
+      }
+    }
+  }
+
+  marge[:address][:street][:name] = "Fake St."
+
+  marge
+  # {
+  #   address: {
+  #     street: {
+  #       number: 742,
+  #       name: "Fake St."
+  #     }
+  #   }
+  # }
+#+END_SRC
+
+To update a value three levels deep in a nested Ruby hash, we just had to assign the chain of keys/accessors to a new value. This updated the =marge= data structure in place with the new street name value.
+
+In a language with immutable data structures, /e.g./ Elixir, updating deeply nested data is another story:
+
+#+BEGIN_SRC elixir
+  marge = %{
+    address: %{
+      street: %{
+        number: 742,
+        name: "Evergreen Terrace"
+      }
+    }
+  }
+
+  %{marge | address: %{
+       marge.address | street: %{
+         marge.address.street | name: "Fake St."
+       }
+    }
+  }
+
+  marge
+  # %{
+  #   address: %{
+  #     street: %{
+  #       number: 742,
+  #       name: "Evergreen Terrace"
+  #     }
+  #   }
+  # }
+#+END_SRC 
+
+Updating the street name in this nested map is much more involved than chaining the accessors and assigning a new value[fn:3]. Additionally, because we're working with immutable data, the data structure bound to =marge= is not actually modified. The update (src_ELIXIR{%{marge | address: %{...}}}) returns a copy of the data structure with the change made to the street name.
+
+I would argue that this is a good thing, as immutability makes it easier to avoid unintended side-effects. This isn't directly relevant to the current discussion of lenses (and lenses won't behave any different in this respect). It is however something to be aware of – to do anything with the data structure after it has been updated in Elixir, it must be bound to a variable (it can be rebound to =marge=, but it can also be bound to any valid name).
+
+** What difference can lenses make?
+    With lenses we can make these sorts of updates less verbose:
+
+    #+BEGIN_SRC elixir
+      import Focus
+      alias Lens
+
+      marge = %{
+        address: %{
+          street: %{
+            number: 742,
+            name: "Evergreen Terrace"
+          }
+        }
+      }
+
+      Lens.make_lens(:address)
+      ~> Lens.make_lens(:street)
+      ~> Lens.make_lens(:name)
+      |> Focus.set(marge, "Fake St.")
+    #+END_SRC
+
+    We can also bind lenses to variables and reuse them to operate on data throughout the data structure:
+
+    #+BEGIN_SRC elixir
+      import Focus
+      alias Lens
+
+      marge = %{
+        address: %{
+          street: %{
+            number: 742,
+            name: "Evergreen Terrace"
+          }
+        }
+      }
+
+      # binding the lenses
+      address = Lens.make_lens(:address)
+      street = Lens.make_lens(:street)
+      name = Lens.make_lens(:name)
+
+      # using them to set the same value as before
+      address ~> street ~> name
+      |> Focus.set(marge, "Fake St.")
+
+      # %{
+      #   address: %{
+      #     street: %{
+      #       number: 742,
+      #       name: "Fake St."
+      #     }
+      #   }
+      # }
+
+      # viewing a piece of the structure
+      address ~> street
+      |> Focus.view(marge)
+
+      # %{
+      #   number: 742,
+      #   name: "Fake St."
+      # }
+    #+END_SRC
+
+* Focus' API[fn:5]    
+
+** Optic creation
+  To make a lens or prism, focus provides[fn:4] the following functions:
+    - src_ELIXIR{Lens.make_lens/1} :: given *v* (an atom, string, or integer), returns a lens focused on *v*
+         #+BEGIN_SRC elixir
+           Lens.make_lens(:username)
+
+           Lens.make_lens("address")
+
+           Lens.make_lens(42)
+         #+END_SRC
+         Note that atoms and strings are intentionally not interchangeable.
+    - src_ELIXIR{Lens.make_lenses/1} :: given a map, *m*, returns a map *l* from =key(m) => Lens(m)=
+         #+BEGIN_SRC elixir
+           bart = %{
+             name: "Bart",
+             age: 10,
+             friends: ["Milhouse"],
+             pets: ["Santa's Little Helper"]
+           }
+
+           lenses = Lens.make_lenses(bart)
+
+           #%{
+           #  name: %Lens{…},
+           #  age: %Lens{…},
+           #  friends: %Lens{…},
+           #  pets: %Lens{…}
+           #}
+         #+END_SRC
+    - src_ELIXIR{Lens.idx/1} :: given *i*, an integer representing an index, returns a lens focused on *i*
+         #+BEGIN_SRC elixir
+           Lens.idx(0)
+
+           Lens.idx(42)
+         #+END_SRC
+    - src_ELIXIR{Prism.ok/0} :: returns a lens focused on the src_ELIXIR{{:ok, val}} tuple
+    - src_ELIXIR{Prism.error/0} :: returns a lens focused on the src_ELIXIR{{:error, reason}} tuple
+         #+BEGIN_SRC elixir
+           Prism.ok
+
+           Prism.error
+         #+END_SRC
+
+** Composition
+  Optics can be composed together to build up more complex lenses/prisms that focus deeper into a structure:
+  + src_ELIXIR{Focus.compose/2} :: given a lens *f* and a lens *g*, returns a new lens, *f(g)*
+       #+BEGIN_SRC elixir
+         marge = %{
+           address: %{
+             street: %{
+               number: 742,
+               name: "Evergreen Terrace"
+             }
+           }
+         }
+
+         address = make_lens(:address)
+         street = make_lens(:street)
+
+         Focus.compose(address, street)
+         # %Lens{…} that focuses into street through address
+       #+END_SRC
+  + src_ELIXIR{~>/2} :: drill, an infix operator for src_ELIXIR{Focus.compose/2}; this operator signifies drilling from one lens to another, deeper into the data structure
+       #+BEGIN_SRC elixir
+         # Focus.compose(address, street) can be written infix as:
+
+         address ~> street
+
+         # This syntax is even more useful as more lenses are composed:
+         name = Lens.make_lens(:name)
+
+         address
+         ~> street
+         ~> name
+       #+END_SRC
+  
+** Use
+  The core functionality is exposed via the *Focus* module:
+   + src_ELIXIR{Focus.view/2} :: given a lens *l*, and a data structure *s*, view the value *l* focuses on in *s*
+        #+BEGIN_SRC elixir
+          # Given marge and the address, street, and name lenses previously defined:
+
+          address
+          ~> street
+          ~> name
+          |> Focus.view(marge)
+
+          # "Evergreen Terrace"
+        #+END_SRC
+   + src_ELIXIR{Focus.over/3} :: given a lens *l*, a data structure *s*, and a function *f*, apply *f* to the value *l* focuses (*v*) on in *s* and replace *v* with *f(v)*
+        #+BEGIN_SRC elixir
+           address
+           ~> street
+           ~> name
+           |> Focus.over(marge, &String.reverse/1)
+
+          #%{
+          #  address: %{
+          #    street: %{
+          #      number: 742,
+          #      name: "ecarreT neergrevE"
+          #    }
+          #  }
+          #}
+        #+END_SRC
+   + src_ELIXIR{Focus.set/3} ::  given a lens *l*, a data structure *s*, and a new value *y*, replace the value *l* focuses (*v*) in *s* with *y*
+        #+BEGIN_SRC elixir
+           address
+           ~> street
+           ~> name
+           |> Focus.set(marge, "Fake St.")
+
+          #%{
+          #  address: %{
+          #    street: %{
+          #      number: 742,
+          #      name: "Fake St."
+          #    }
+          #  }
+          #}
+        #+END_SRC
+   
+  There are a few additional functions currently in focus, but these are currently the core feature set.
+
+* Conclusion
+  Functional lenses are an interesting concept that can help facilitate working with nested data. In the near term, I intend to continue working on this library, adding additional combinators and optic generators. I'm also planning a follow up post to this one demonstrating how focus can be used to work with a JSON API.
+
+* References
+  + The Haskell lens package :: Edward Kmett, et al. https://hackage.haskell.org/package/lens-4.15.1
+  + A Little Lens Starter Tutorial :: Joseph Abrahamson. https://www.schoolofhaskell.com/user/tel/a-little-lens-starter-tutorial
+  + Overloading Functional References :: Twan van Laarhoven. http://twanvl.nl/blog/haskell/overloading-functional-references 
+
+* Footnotes
+
+[fn:5] as of v0.2.1
+
+[fn:4] as of 2017-02-27
+
+[fn:3] This is slightly disingenuous for the purpose of illustration; =put_in/3= would achieve the same result in a more compact form: =put_in(marge, [:address, :street, :name], "Fake St.")=.
+
+[fn:2] Setting can be seen as a special case of function application in which the value the lens focuses on (the function's argument) is ignored and the value to be set is the returned value. 
+
+[fn:1] Compare with e.g. "[[https://patternsinfp.wordpress.com/2011/01/31/lenses-are-the-coalgebras-for-the-costate-comonad/][Lenses are the coalgebras for the costate comonad]]"
