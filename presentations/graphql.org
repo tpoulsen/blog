@@ -1,0 +1,208 @@
+#+OPTIONS: ':nil *:t -:t ::t <:t H:3 \n:nil ^:t arch:headline author:t c:nil
+#+OPTIONS: creator:nil d:(not "LOGBOOK") date:t e:t email:nil f:t inline:t
+#+OPTIONS: num:nil p:nil pri:nil prop:nil stat:t tags:t tasks:t tex:t timestamp:nil
+#+OPTIONS: title:t toc:nil todo:t |:t
+#+TITLE: GraphQL
+#+DATE: 2017-03-02
+#+AUTHOR: Travis Poulsen
+#+EMAIL: travis@smartlogic.io
+#+LANGUAGE: en
+#+SELECT_TAGS: export
+#+EXCLUDE_TAGS: noexport
+#+CREATOR: Emacs 24.5.2 (Org mode 8.3.4)
+#+REVEAL_ROOT: http://cdn.jsdelivr.net/reveal.js/3.0.0/
+#+BABEL: :session *js* :cache yes :results output :exports both :tangle yes \n
+#+REVEAL_THEME: solarized
+#+REVEAL_MARGIN: 0.005
+#+REVEAL_EXTRA_CSS: ../styles/reveal.css
+
+* History
+** In the *beginning...
+   #+ATTR_REVEAL: :frag (roll-in roll-in)
+   REST
+
+   #+ATTR_REVEAL: :frag (roll-in roll-in)
+   *Of the millennium :)
+*** REST
+    #+ATTR_REVEAL: :frag (roll-in roll-in roll-in roll-in)
+    + REpresentational State Transfer
+    + Roy Fielding's doctoral dissertation
+      + "Architectural Styles and the Design of Network-based Software Architectures". (2000)
+*** Actions matched to HTTP verbs
+    + GET
+    + POST
+    + PUT
+    + PATCH
+    + DELETE
+*** Unit of data is a resource
+    + ~/plants~
+    + ~/plants/1~
+*** HTTP verb + Resource = action
+    + ~GET /plants      -> Plant.index()~ 
+    + ~GET /plants/1    -> Plant.show(1)~
+    + ~POST /plants/1   -> Plant.create(1)~
+    + ~DELETE /plants/1 -> Plant.destroy(1)~
+*** Nested resources and associations
+    + ~GET /plants/1/characteristics -> Plant.find(1).characteristics()~
+    #+ATTR_REVEAL: :frag (roll-in roll-in roll-in roll-in)
+    #+BEGIN_SRC json
+      {
+        "id": 1,
+        "commonName": "Scarlet Oak",
+        "scientificName": "Quercus coccinea",
+        "links": {
+          "leaf_venation": "/plants/1/leaf_venation",
+          "leaf_shape": "/plants/1/leaf_shape",
+          "fruit_type": "/plants/1/fruit_type",
+        }
+      }
+    #+END_SRC
+*** (My) Problems with REST 
+    #+ATTR_REVEAL: :frag (roll-in roll-in roll-in roll-in)
+    + Static, predefined responses
+      + What should be in a payload for an endpoint?
+    + Many requests per page/view
+      + Poor/slow internet connections?
+    + Documentation is painful and manual
+      + Swagger et al.
+*** The big trade off
+     + Payload size vs number of requests
+     [[../images/graphql/load_time.png]]
+* GraphQL
+** Client-driven
+*** Response shape === Request shape
+    #+ATTR_REVEAL: :frag (roll-in roll-in)
+    The client gets _exactly_ what it asks for; nothing more, nothing less.
+*** Example
+    #+BEGIN_SRC js
+      query {
+        plants(id: 1) {
+            commonName
+          , scientificName
+          , fruit_type {
+            name
+          }
+        }
+      }
+    #+END_SRC
+
+    #+ATTR_REVEAL: :frag (roll-in roll-in)
+    #+BEGIN_SRC json
+      {
+        "data": {
+          "commonName": "Scarlet Oak",
+          "scientificName": "Quercus coccinea",
+          "fruitType": {
+            "name": "nut"
+          }
+        }
+      }
+    #+END_SRC
+** Strong type system
+*** The Schema
+   #+ATTR_REVEAL: :frag (roll-in roll-in)
+    + Ensures internal consistency
+      + Every possible type of response from the api is captured
+    + Lets the client know what fields it can ask for
+      + Client doesn't have to specify types when making requests, but needs to honor them
+** Self-documenting
+*** Introspection
+   #+ATTR_REVEAL: :frag (roll-in roll-in)
+    + Facilitated by the type system
+    + Query the schema to find fields and types
+   #+ATTR_REVEAL: :frag (roll-in roll-in)
+    #+BEGIN_SRC json 
+      {
+        "__type": {
+          "name": "Plant",
+          "fields": [
+            {
+              "name": "commonName",
+              "type": { "name": "String" },
+            },
+            {
+              "name": "scientificName",
+              "type": { "name": "String" },
+            },
+            {
+              "name": "fruitType",
+              "type": { "name": "FruitType" },
+            }
+          ]
+        }
+      }
+    #+END_SRC
+*** Tooling benefit
+*** 
+   :PROPERTIES:
+   :reveal_background: ../images/graphql/documentation.png
+   :reveal_background_size: 900px
+   :reveal_background_trans: slide
+   :END:
+*** 
+   :PROPERTIES:
+   :reveal_background: ../images/graphql/queries.png
+   :reveal_background_size: 900px
+   :reveal_background_trans: slide
+   :END:
+*** 
+   :PROPERTIES:
+   :reveal_background: ../images/graphql/fields.png
+   :reveal_background_size: 900px
+   :reveal_background_trans: slide
+   :END:
+** The server
+   #+ATTR_REVEAL: :frag (roll-in roll-in roll-in roll-in)
+   + Serves the api over a single endpoint
+   + ~GET~ for queries
+   + ~POST~ for mutations
+   + Everything returns something
+*** Queries
+    Fetching any kind of data.
+    + Index views
+    + Show views
+    #+BEGIN_SRC js
+      query {
+        plants {
+          commonName
+        }
+      }
+
+      // query can be omitted
+      {
+        plants {
+          commonName
+        }
+      }
+    #+END_SRC
+*** Mutations
+    Changing data (and then fetching)
+    + Create new things
+    + Modify existing things
+    + Delete things
+    #+BEGIN_SRC js
+      mutation {
+        newPlant(commonName: "Strawberry",
+                 scientificName: "Fragaria vesca",
+                 fruitType: "accessory") {
+          commonName
+          scientificName
+        }
+      }
+    #+END_SRC
+*** Fragments
+    Save views into data
+  #+BEGIN_SRC js
+    {
+      plant(id: 1) {
+        ...names
+      }
+    }
+
+    fragment names on Plant {
+      commonName
+      scientificName
+    }
+  #+END_SRC
+* Absinthe demo
+  [[https://github.com/tpoulsen/taxon-graphql][tpoulsen/taxon-graphql]]

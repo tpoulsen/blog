@@ -8,7 +8,7 @@ import           Text.Pandoc
 --------------------------------------------------------------------------------
 main :: IO ()
 main = hakyll $ do
-    match "images/*" $ do
+    match "images/**" $ do
         route   idRoute
         compile copyFileCompiler
 
@@ -20,6 +20,10 @@ main = hakyll $ do
         route   $ setExtension "css"
         compile $ do
           getResourceString >>= withItemBody (unixFilter "runghc" [])
+
+    match "presentations/*.html" $ do
+        route   idRoute
+        compile copyFileCompiler
 
     match (fromList ["about.markdown", "contact.markdown"]) $ do
         route   $ setExtension "html"
