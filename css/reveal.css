@@ -1,4 +1,7 @@
 .reveal pre {
   width: 100%;
   padding: 1em;
+  box-shadow: none;
+  font-family: "Fira Code", "Monoid", monospace
 }
+

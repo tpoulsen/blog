@@ -6,6 +6,7 @@ import Clay
 main :: IO()
 main = putCss $ do
   codeBlockStyle
+  inLineCodeBlockStyle
   sourceCodeStyle
   sourceCodeTableStyle
   tableCellStyle
@@ -17,8 +18,14 @@ codeBlockStyle =
     padding         (px 10) (px 10) (px 10) (px 10)
     overflowX       scroll
     code <? do
-      fontFamily    ["Monoid", "Fira Code"] [monospace]
-      fontSize      (em 0.8)
+      fontFamily    ["Fira Code", "Monoid"] [monospace]
+      fontSize      (em 1.0)
+
+inLineCodeBlockStyle :: Css
+inLineCodeBlockStyle =
+  code <? do
+    fontFamily    ["Fira Code", "Monoid"] [monospace]
+    fontSize      (em 1.0)
 
 sourceCodeStyle :: Css
 sourceCodeStyle =
@@ -77,7 +84,7 @@ sourceCodeTableStyle =
   margin        (px 0) (px 0) (px 0) (px 0)
   padding       (px 0) (px 0) (px 0) (px 0)
   border        none (px 0) black
-  verticalAlign baseline
+  verticalAlign vAlignBaseline
 
 tableCellStyle :: Css
 tableCellStyle =

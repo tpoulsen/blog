@@ -12,6 +12,10 @@ main = hakyll $ do
         route   idRoute
         compile copyFileCompiler
 
+    match "fonts/**" $ do
+        route   idRoute
+        compile copyFileCompiler
+
     match "css/*.css" $ do
         route   idRoute
         compile compressCssCompiler
@@ -75,8 +79,6 @@ main = hakyll $ do
             posts <- fmap (take 10) . recentFirst =<<
                      loadAllSnapshots "posts/*" "content"
             renderAtom feedReaderConfig feedCtx posts
-
-
 
     match "index.html" $ do
         route idRoute
