@@ -78,45 +78,16 @@ install:
   - if [ -f configure.ac ]; then autoreconf -i; fi
   - |
     set -ex
-    case "$BUILD" in
-      stack)
-        stack --no-terminal --install-ghc $ARGS test --bench --only-dependencies
-        ;;
-      cabal)
-        cabal --version
-        travis_retry cabal update
-        cabal install --only-dependencies --enable-tests --enable-benchmarks --force-reinstalls --ghc-options=-O0 --reorder-goals --max-backjumps=-1 $CABALARGS $PACKAGES
-        ;;
-    esac
+      stack build
+      stack exec site clean
+      stack exec site build
     set +ex
 script:
 - |
   set -ex
-  case "$BUILD" in
-    stack)
-      stack --no-terminal $ARGS test --bench --no-run-benchmarks --haddock --no-haddock-deps
-      ;;
-    cabal)
-      cabal install --enable-tests --enable-benchmarks --force-reinstalls --ghc-options=-O0 --reorder-goals --max-backjumps=-1 $CABALARGS $PACKAGES
-
-      ORIGDIR=$(pwd)
-      for dir in $PACKAGES
-      do
-        cd $dir
-        cabal check || [ "$CABALVER" == "1.16" ]
-        cabal sdist
-        PKGVER=$(cabal info . | awk '{print $2;exit}')
-        SRC_TGZ=$PKGVER.tar.gz
-        cd dist
-        tar zxfv "$SRC_TGZ"
-        cd "$PKGVER"
-        cabal configure --enable-tests
-        cabal exec site build
-        cabal test
-        cd $ORIGDIR
-      done
-      ;;
-  esac
+    stack build
+    stack exec site clean
+    stack exec site build
   set +ex
 after_success:
   - bash _scripts/deploy.sh
