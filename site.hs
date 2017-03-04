@@ -111,7 +111,7 @@ postCtxWithTags tags =
 pandocWriterConfig =
   defaultHakyllWriterOptions
     { writerReferenceLinks = True
-    , writerTemplate = "<article class='post'><section class='toc'><h2>Contents</h2>$toc$</section>\n<section class='post-body'>$body$</section></article>"
+    , writerTemplate = Just "<article class='post'><section class='toc'><h2>Contents</h2>$toc$</section>\n<section class='post-body'>$body$</section></article>"
     --, writerStandalone = True
     , writerTableOfContents = True
     }
