@@ -8,8 +8,6 @@ cache:
 before_cache:
   - rm -fv $HOME/.cabal/packages/hackage.haskell.org/00-index.tar
   - rm -fv $HOME/.cabal/packages/hackage.haskell.org/build-reports.log
-addons:
-  ssh_known_hosts: travispoulsen.com
 
 matrix:
   include:
@@ -29,7 +27,7 @@ matrix:
   # variable, such as using --stack-yaml to point to a different file.
   - env: BUILD=stack ARGS=""
     compiler: ": #stack default"
-    addons: {apt: {packages: [ghc-7.10.3], sources: [hvr-ghc]}}
+    addons: {apt: {packages: [ghc-7.10.3], sources: [hvr-ghc]}, ssh_known_hosts: travispoulsen.com}
 
   # Nightly builds are allowed to fail
   - env: BUILD=stack ARGS="--resolver nightly"
