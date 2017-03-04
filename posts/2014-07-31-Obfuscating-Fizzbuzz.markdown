@@ -1,5 +1,5 @@
 ---
-title: Obfusticating FizzBuzz
+title: Obfuscating FizzBuzz
 tags: haskell, functional programming
 ---
 
@@ -48,7 +48,7 @@ ghci> map fizzBuzz [1..50]
   "34","Buzz","Fizz","37","38","Fizz","Buzz","41","Fizz","43","44","Fizzbuzz","46","47","Fizz","49","Buzz"]
 ```
 
-Obfustication 1
+Obfuscation 1
 ====
 
 ```haskell
@@ -69,7 +69,7 @@ Fizz Buzz 26 Fizz 28 29 FizzBuzz 31 32 Fizz 34 Buzz Fizz 37 38 Fizz Buzz 41 Fizz
 FizzBuzz 46 47 Fizz 49 Buzz"
 ```
 
-Obfustication 2
+Obfuscation 2
 ====
 
 ```haskell
@@ -102,7 +102,7 @@ Buzz 26 Fizz 28 29 FizzBuzz 31 32 Fizz 34 Buzz Fizz 37 38 Fizz Buzz 41 Fizz 43 4
 46 47 Fizz 49 Buzz"
 ```
 
-Obfustication 3
+Obfuscation 3
 ====
 
 ```haskell

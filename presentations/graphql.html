@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>GraphQL</title>
+<meta name="author" content="(Travis Poulsen)"/>
+<style type="text/css">
+.underline { text-decoration: underline; }
+</style>
+<link rel="stylesheet" href="http://cdn.jsdelivr.net/reveal.js/3.0.0/css/reveal.css"/>
+
+<link rel="stylesheet" href="http://cdn.jsdelivr.net/reveal.js/3.0.0/css/theme/solarized.css" id="theme"/>
+
+<link rel="stylesheet" href="../css/reveal.css"/>
+
+<!-- If the query includes 'print-pdf', include the PDF print sheet -->
+<script>
+    if( window.location.search.match( /print-pdf/gi ) ) {
+        var link = document.createElement( 'link' );
+        link.rel = 'stylesheet';
+        link.type = 'text/css';
+        link.href = 'http://cdn.jsdelivr.net/reveal.js/3.0.0/css/print/pdf.css';
+        document.getElementsByTagName( 'head' )[0].appendChild( link );
+    }
+</script>
+</head>
+<body>
+<div class="reveal">
+<div class="slides">
+<section id="sec-title-slide"><h1 class="title">GraphQL</h1><h2 class="author">Travis Poulsen</h2><h2 class="date">2017-03-02</h2>
+</section>
+
+<section>
+<section id="slide-orgheadline9">
+<h2 id="orgheadline9">History</h2>
+<div class="outline-text-2" id="text-orgheadline9">
+</div></section>
+<section id="slide-orgheadline8">
+<h3 id="orgheadline8">In the *beginning&#x2026;</h3>
+<p class="fragment (roll-in roll-in)">
+REST
+</p>
+
+<p class="fragment (roll-in roll-in)">
+*Of the millennium :)
+</p>
+</section>
+<section id="slide-orgheadline1">
+<h4 id="orgheadline1">REST</h4>
+<ul>
+<li class="fragment roll-in">REpresentational State Transfer</li>
+<li class="fragment roll-in">Roy Fielding's doctoral dissertation
+<ul>
+<li>"Architectural Styles and the Design of Network-based Software Architectures". (2000)</li>
+
+</ul></li>
+
+</ul>
+</section>
+<section id="slide-orgheadline2">
+<h4 id="orgheadline2">Actions matched to HTTP verbs</h4>
+<ul>
+<li>GET</li>
+<li>POST</li>
+<li>PUT</li>
+<li>PATCH</li>
+<li>DELETE</li>
+
+</ul>
+</section>
+<section id="slide-orgheadline3">
+<h4 id="orgheadline3">Unit of data is a resource</h4>
+<ul>
+<li><code>/plants</code></li>
+<li><code>/plants/1</code></li>
+
+</ul>
+</section>
+<section id="slide-orgheadline4">
+<h4 id="orgheadline4">HTTP verb + Resource = action</h4>
+<ul>
+<li><code>GET /plants      -&gt; Plant.index()</code></li>
+<li><code>GET /plants/1    -&gt; Plant.show(1)</code></li>
+<li><code>POST /plants/1   -&gt; Plant.create(1)</code></li>
+<li><code>DELETE /plants/1 -&gt; Plant.destroy(1)</code></li>
+
+</ul>
+</section>
+<section id="slide-orgheadline5">
+<h4 id="orgheadline5">Nested resources and associations</h4>
+<ul>
+<li><code>GET /plants/1/characteristics -&gt; Plant.find(1).characteristics()</code></li>
+
+</ul>
+<div class="org-src-container">
+
+<pre  class="fragment (roll-in roll-in roll-in roll-in)"><span style="color: #DCDCCC;">{</span>
+  <span style="color: #F0DFAF; font-weight: bold;">"id"</span>: <span style="color: #BFEBBF;">1</span>,
+  <span style="color: #F0DFAF; font-weight: bold;">"commonName"</span>: <span style="color: #CC9393;">"Scarlet Oak"</span>,
+  <span style="color: #F0DFAF; font-weight: bold;">"scientificName"</span>: <span style="color: #CC9393;">"Quercus coccinea"</span>,
+  <span style="color: #F0DFAF; font-weight: bold;">"links"</span>: <span style="color: #BFEBBF;">{</span>
+    <span style="color: #F0DFAF; font-weight: bold;">"leaf_venation"</span>: "/plants/<span style="color: #BFEBBF;">1</span>/leaf_venation",
+    <span style="color: #F0DFAF; font-weight: bold;">"leaf_shape"</span>: "/plants/<span style="color: #BFEBBF;">1</span>/leaf_shape",
+    <span style="color: #F0DFAF; font-weight: bold;">"fruit_type"</span>: "/plants/<span style="color: #BFEBBF;">1</span>/fruit_type",
+  <span style="color: #BFEBBF;">}</span>
+<span style="color: #DCDCCC;">}</span>
+</pre>
+</div>
+</section>
+<section id="slide-orgheadline6">
+<h4 id="orgheadline6">(My) Problems with REST</h4>
+<ul>
+<li class="fragment roll-in">Static, predefined responses
+<ul>
+<li>What should be in a payload for an endpoint?</li>
+
+</ul></li>
+<li class="fragment roll-in">Many requests per page/view
+<ul>
+<li>Poor/slow internet connections?</li>
+
+</ul></li>
+<li class="fragment roll-in">Documentation is painful and manual
+<ul>
+<li>Swagger et al.</li>
+
+</ul></li>
+
+</ul>
+</section>
+<section id="slide-orgheadline7">
+<h4 id="orgheadline7">The big trade off</h4>
+<ul>
+<li>Payload size vs number of requests</li>
+
+</ul>
+
+<div class="figure">
+<p><img src="../images/graphql/load_time.png" alt="load_time.png" />
+</p>
+</div>
+</section>
+</section>
+<section>
+<section id="slide-orgheadline25">
+<h2 id="orgheadline25">GraphQL</h2>
+<div class="outline-text-2" id="text-orgheadline25">
+</div></section>
+<section id="slide-orgheadline12">
+<h3 id="orgheadline12">Client-driven</h3>
+<div class="outline-text-3" id="text-orgheadline12">
+</div></section>
+<section id="slide-orgheadline10">
+<h4 id="orgheadline10">Response shape <code>=</code> Request shape</h4>
+<p class="fragment (roll-in roll-in)">
+The client gets <span class="underline">exactly</span> what it asks for; nothing more, nothing less.
+</p>
+</section>
+<section id="slide-orgheadline11">
+<h4 id="orgheadline11">Example</h4>
+<div class="org-src-container">
+
+<pre  class="src src-js">query <span style="color: #DCDCCC;">{</span>
+  plants<span style="color: #BFEBBF;">(</span>id: <span style="color: #BFEBBF;">1</span><span style="color: #BFEBBF;">)</span> <span style="color: #BFEBBF;">{</span>
+      commonName
+    , scientificName
+    , fruit_type <span style="color: #D0BF8F;">{</span>
+      name
+    <span style="color: #D0BF8F;">}</span>
+  <span style="color: #BFEBBF;">}</span>
+<span style="color: #DCDCCC;">}</span>
+</pre>
+</div>
+
+<div class="org-src-container">
+
+<pre  class="fragment (roll-in roll-in)"><span style="color: #DCDCCC;">{</span>
+  <span style="color: #F0DFAF; font-weight: bold;">"data"</span>: <span style="color: #BFEBBF;">{</span>
+    <span style="color: #F0DFAF; font-weight: bold;">"commonName"</span>: <span style="color: #CC9393;">"Scarlet Oak"</span>,
+    <span style="color: #F0DFAF; font-weight: bold;">"scientificName"</span>: <span style="color: #CC9393;">"Quercus coccinea"</span>,
+    <span style="color: #F0DFAF; font-weight: bold;">"fruitType"</span>: <span style="color: #D0BF8F;">{</span>
+      <span style="color: #F0DFAF; font-weight: bold;">"name"</span>: <span style="color: #CC9393;">"nut"</span>
+    <span style="color: #D0BF8F;">}</span>
+  <span style="color: #BFEBBF;">}</span>
+<span style="color: #DCDCCC;">}</span>
+</pre>
+</div>
+</section>
+<section id="slide-orgheadline14">
+<h3 id="orgheadline14">Strong type system</h3>
+<div class="outline-text-3" id="text-orgheadline14">
+</div></section>
+<section id="slide-orgheadline13">
+<h4 id="orgheadline13">The Schema</h4>
+<ul>
+<li class="fragment roll-in">Ensures internal consistency
+<ul>
+<li>Every possible type of response from the api is captured</li>
+
+</ul></li>
+<li class="fragment roll-in">Lets the client know what fields it can ask for
+<ul>
+<li>Client doesn't have to specify types when making requests, but needs to honor them</li>
+
+</ul></li>
+
+</ul>
+</section>
+<section id="slide-orgheadline20">
+<h3 id="orgheadline20">Self-documenting</h3>
+<div class="outline-text-3" id="text-orgheadline20">
+</div></section>
+<section id="slide-orgheadline15">
+<h4 id="orgheadline15">Introspection</h4>
+<ul>
+<li class="fragment roll-in">Facilitated by the type system</li>
+<li class="fragment roll-in">Query the schema to find fields and types</li>
+
+</ul>
+<div class="org-src-container">
+
+<pre  class="fragment (roll-in roll-in)"><span style="color: #DCDCCC;">{</span>
+  <span style="color: #F0DFAF; font-weight: bold;">"__type"</span>: <span style="color: #BFEBBF;">{</span>
+    <span style="color: #F0DFAF; font-weight: bold;">"name"</span>: <span style="color: #CC9393;">"Plant"</span>,
+    <span style="color: #F0DFAF; font-weight: bold;">"fields"</span>: <span style="color: #D0BF8F;">[</span>
+      <span style="color: #93E0E3;">{</span>
+        <span style="color: #F0DFAF; font-weight: bold;">"name"</span>: <span style="color: #CC9393;">"commonName"</span>,
+        <span style="color: #F0DFAF; font-weight: bold;">"type"</span>: <span style="color: #9FC59F;">{</span> <span style="color: #F0DFAF; font-weight: bold;">"name"</span>: <span style="color: #CC9393;">"String"</span> <span style="color: #9FC59F;">}</span>,
+      <span style="color: #93E0E3;">}</span>,
+      <span style="color: #93E0E3;">{</span>
+        <span style="color: #F0DFAF; font-weight: bold;">"name"</span>: <span style="color: #CC9393;">"scientificName"</span>,
+        <span style="color: #F0DFAF; font-weight: bold;">"type"</span>: <span style="color: #9FC59F;">{</span> <span style="color: #F0DFAF; font-weight: bold;">"name"</span>: <span style="color: #CC9393;">"String"</span> <span style="color: #9FC59F;">}</span>,
+      <span style="color: #93E0E3;">}</span>,
+      <span style="color: #93E0E3;">{</span>
+        <span style="color: #F0DFAF; font-weight: bold;">"name"</span>: <span style="color: #CC9393;">"fruitType"</span>,
+        <span style="color: #F0DFAF; font-weight: bold;">"type"</span>: <span style="color: #9FC59F;">{</span> <span style="color: #F0DFAF; font-weight: bold;">"name"</span>: <span style="color: #CC9393;">"FruitType"</span> <span style="color: #9FC59F;">}</span>,
+      <span style="color: #93E0E3;">}</span>
+    <span style="color: #D0BF8F;">]</span>
+  <span style="color: #BFEBBF;">}</span>
+<span style="color: #DCDCCC;">}</span>
+</pre>
+</div>
+</section>
+<section id="slide-orgheadline16">
+<h4 id="orgheadline16">Tooling benefit</h4>
+</section>
+<section id="slide-orgheadline17" data-background="../images/graphql/documentation.png" data-background-size="900px" data-background-transition="slide">
+<h4 id="orgheadline17"></h4>
+</section>
+<section id="slide-orgheadline18" data-background="../images/graphql/queries.png" data-background-size="900px" data-background-transition="slide">
+<h4 id="orgheadline18"></h4>
+</section>
+<section id="slide-orgheadline19" data-background="../images/graphql/fields.png" data-background-size="900px" data-background-transition="slide">
+<h4 id="orgheadline19"></h4>
+</section>
+<section id="slide-orgheadline24">
+<h3 id="orgheadline24">The server</h3>
+<ul>
+<li class="fragment roll-in">Serves the api over a single endpoint</li>
+<li class="fragment roll-in"><code>GET</code> for queries</li>
+<li class="fragment roll-in"><code>POST</code> for mutations</li>
+<li class="fragment roll-in">Everything returns something</li>
+
+</ul>
+</section>
+<section id="slide-orgheadline21">
+<h4 id="orgheadline21">Queries</h4>
+<p>
+Fetching any kind of data.
+</p>
+<ul>
+<li>Index views</li>
+<li>Show views</li>
+
+</ul>
+<div class="org-src-container">
+
+<pre  class="src src-js">query <span style="color: #DCDCCC;">{</span>
+  plants <span style="color: #BFEBBF;">{</span>
+    commonName
+  <span style="color: #BFEBBF;">}</span>
+<span style="color: #DCDCCC;">}</span>
+
+<span style="color: #5F7F5F;">// </span><span style="color: #7F9F7F;">query can be omitted</span>
+<span style="color: #DCDCCC;">{</span>
+  plants <span style="color: #BFEBBF;">{</span>
+    commonName
+  <span style="color: #BFEBBF;">}</span>
+<span style="color: #DCDCCC;">}</span>
+</pre>
+</div>
+</section>
+<section id="slide-orgheadline22">
+<h4 id="orgheadline22">Mutations</h4>
+<p>
+Changing data (and then fetching)
+</p>
+<ul>
+<li>Create new things</li>
+<li>Modify existing things</li>
+<li>Delete things</li>
+
+</ul>
+<div class="org-src-container">
+
+<pre  class="src src-js">mutation <span style="color: #DCDCCC;">{</span>
+  newPlant<span style="color: #BFEBBF;">(</span>commonName: <span style="color: #CC9393;">"Strawberry"</span>,
+           scientificName: <span style="color: #CC9393;">"Fragaria vesca"</span>,
+           fruitType: <span style="color: #CC9393;">"accessory"</span><span style="color: #BFEBBF;">)</span> <span style="color: #BFEBBF;">{</span>
+    commonName
+    scientificName
+  <span style="color: #BFEBBF;">}</span>
+<span style="color: #DCDCCC;">}</span>
+</pre>
+</div>
+</section>
+<section id="slide-orgheadline23">
+<h4 id="orgheadline23">Fragments</h4>
+<p>
+Save views into data
+</p>
+<div class="org-src-container">
+
+<pre  class="src src-js"><span style="color: #DCDCCC;">{</span>
+  plant<span style="color: #BFEBBF;">(</span>id: <span style="color: #BFEBBF;">1</span><span style="color: #BFEBBF;">)</span> <span style="color: #BFEBBF;">{</span>
+    ...names
+  <span style="color: #BFEBBF;">}</span>
+<span style="color: #DCDCCC;">}</span>
+
+fragment names on Plant <span style="color: #DCDCCC;">{</span>
+  commonName
+  scientificName
+<span style="color: #DCDCCC;">}</span>
+</pre>
+</div>
+</section>
+</section>
+<section>
+<section id="slide-orgheadline26">
+<h2 id="orgheadline26">Absinthe demo</h2>
+<p>
+<a href="https://github.com/tpoulsen/taxon-graphql">tpoulsen/taxon-graphql</a>
+</p>
+</section>
+</section>
+</div>
+</div>
+<script src="http://cdn.jsdelivr.net/reveal.js/3.0.0/lib/js/head.min.js"></script>
+<script src="http://cdn.jsdelivr.net/reveal.js/3.0.0/js/reveal.js"></script>
+
+<script>
+// Full list of configuration options available here:
+// https://github.com/hakimel/reveal.js#configuration
+Reveal.initialize({
+
+controls: true,
+progress: true,
+history: false,
+center: true,
+slideNumber: 'c',
+rollingLinks: false,
+keyboard: true,
+overview: true,
+margin: 0.01,
+
+theme: Reveal.getQueryHash().theme, // available themes are in /css/theme
+transition: Reveal.getQueryHash().transition || 'default', // default/cube/page/concave/zoom/linear/fade/none
+transitionSpeed: 'default',
+multiplex: {
+    secret: '', // null if client
+    id: '', // id, obtained from socket.io server
+    url: '' // Location of socket.io server
+},
+
+// Optional libraries used to extend on reveal.js
+dependencies: [
+ { src: 'http://cdn.jsdelivr.net/reveal.js/3.0.0/lib/js/classList.js', condition: function() { return !document.body.classList; } },
+ { src: 'http://cdn.jsdelivr.net/reveal.js/3.0.0/plugin/markdown/marked.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+ { src: 'http://cdn.jsdelivr.net/reveal.js/3.0.0/plugin/markdown/markdown.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+ { src: 'http://cdn.jsdelivr.net/reveal.js/3.0.0/plugin/zoom-js/zoom.js', async: true, condition: function() { return !!document.body.classList; } },
+ { src: 'http://cdn.jsdelivr.net/reveal.js/3.0.0/plugin/notes/notes.js', async: true, condition: function() { return !!document.body.classList; } }]
+});
+</script>
+</body>
+</html>
