@@ -6,8 +6,10 @@ cache:
   - $HOME/.ghc
   - $HOME/.stack
 before_cache:
-- rm -fv $HOME/.cabal/packages/hackage.haskell.org/00-index.tar
-- rm -fv $HOME/.cabal/packages/hackage.haskell.org/build-reports.log
+  - rm -fv $HOME/.cabal/packages/hackage.haskell.org/00-index.tar
+  - rm -fv $HOME/.cabal/packages/hackage.haskell.org/build-reports.log
+addons:
+  ssh_known_hosts: travispoulsen.com
 
 matrix:
   include:
@@ -37,9 +39,6 @@ matrix:
   allow_failures:
   - env: BUILD=cabal GHCVER=head  CABALVER=head HAPPYVER=1.19.5 ALEXVER=3.1.7
   - env: BUILD=stack ARGS="--resolver nightly"
-
-addons:
-  ssh_known_hosts: travispoulsen.com
 
 before_install:
   - bash _scripts/pre_install.sh
@@ -112,7 +111,7 @@ script:
         tar zxfv "$SRC_TGZ"
         cd "$PKGVER"
         cabal configure --enable-tests
-        cabal build
+        cabal exec site build
         cabal test
         cd $ORIGDIR
       done
