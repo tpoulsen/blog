@@ -1,0 +1,158 @@
+#+OPTIONS: ':nil *:t -:t ::t <:t H:3 \n:nil ^:t arch:headline author:t c:nil
+#+OPTIONS: creator:nil d:(not "LOGBOOK") date:t e:t email:nil f:t inline:t
+#+OPTIONS: num:nil p:nil pri:nil prop:nil stat:t tags:t tasks:t tex:t timestamp:nil
+#+OPTIONS: title:t toc:nil todo:t |:t
+#+TITLE: Getting the most out of IEx
+#+DATE: 2017-03-01
+#+AUTHOR: Travis Poulsen
+#+EMAIL: travis@smartlogic.io
+#+LANGUAGE: en
+#+SELECT_TAGS: export
+#+EXCLUDE_TAGS: noexport
+#+CREATOR: Emacs 24.5.2 (Org mode 8.3.4)
+#+REVEAL_ROOT: http://cdn.jsdelivr.net/reveal.js/3.0.0/
+#+BABEL: :session *js* :cache yes :results output :exports both :tangle yes \n
+#+REVEAL_THEME: solarized
+#+REVEAL_MARGIN: 0.005
+#+REVEAL_EXTRA_CSS: ../css/reveal.css
+
+* IEx?
+  IEx is Elixir's REPL
+  #+ATTR_REVEAL: :frag (roll-in roll-in)
+  We can use it to interactively execute Elixir
+** 
+   :PROPERTIES:
+   :reveal_background: ../images/iex/basic_iex.gif
+   :reveal_background_size: 900px
+   :reveal_background_trans: slide
+   :END:
+* How  can we most effectively use IEx?
+* Get help
+** Discovery
+   Tab completion
+** Documentation
+   Find out what a
+    + Module
+    + Function
+    + Macro
+    + Protocol
+    + etc…
+   does
+*** 
+   :PROPERTIES:
+   :reveal_background: ../images/iex/get_help.gif
+   :reveal_background_size: 900px
+   :reveal_background_trans: slide
+   :END:
+* Navigate the file system
+   + =pwd/0=
+   + =ls/0, ls/1=
+   + =cd/1=
+*** 
+   :PROPERTIES:
+   :reveal_background: ../images/iex/get_around.gif
+   :reveal_background_size: 900px
+   :reveal_background_trans: slide
+   :END:
+* Reload
+  Reload modules that are already compiled in the session
+*** 
+   :PROPERTIES:
+   :reveal_background: ../images/iex/reload.gif
+   :reveal_background_size: 900px
+   :reveal_background_trans: slide
+   :END:
+* Pre-evaluate code
+  With a ~.iex.exs~ file, you can pre-evaluate code during IEx initialization
+
+  #+ATTR_REVEAL: :frag (roll-in roll-in)
+  IEx first attempts to load =./.iex.exs=, then =~/.iex.exs=.
+  
+  #+ATTR_REVEAL: :frag (roll-in roll-in)
+  #+BEGIN_SRC elixir
+    alias Bank.User
+  #+END_SRC
+
+*** 
+   :PROPERTIES:
+   :reveal_background: ../images/iex/iex_exs.gif
+   :reveal_background_size: 900px
+   :reveal_background_trans: slide
+   :END:
+* Save history
+   By default, history is only available for the current session
+
+   #+ATTR_REVEAL: :frag (roll-in roll-in)
+   [[https://github.com/ferd/erlang-history/][ferd/erlang-history]]
+   #+ATTR_REVEAL: :frag (roll-in roll-in)
+   Uses Erlang's dets module to save history
+* Capture previous results
+   + =v/0=
+   + =v/1=
+   #+BEGIN_SRC elixir
+     iex(1)> 4 + 4
+     8
+     iex(2)> 5 * 5
+     25
+     iex(3)> x = v()
+     25
+     iex(4)> y = v(1)
+     8
+     iex(5)> x + y
+     33
+   #+END_SRC
+* Debug
+   =IEx.pry=
+   #+BEGIN_SRC elixir
+     defmodule User do
+       def hello(name) do
+         require IEx; IEx.pry
+
+         "Hello #{name}!"
+       end
+     end
+   #+END_SRC
+  #+ATTR_REVEAL: :frag (roll-in roll-in)
+  When the function is called, drop in at the point of ~IEx.pry~
+  #+ATTR_REVEAL: :frag (roll-in roll-in)
+  #+BEGIN_SRC elixir
+    iex> User.hello("Jim")
+    ...
+    pry(1)> name
+    "Jim"
+  #+END_SRC
+* Remote shells
+** Naming a shell
+  #+BEGIN_SRC shell
+    $ iex --sname foo
+    Erlang/OTP 19 ...
+
+    Interactive Elixir ...
+    iex(foo@hostname)1>
+  #+END_SRC
+** Connecting to a remote shell
+  #+BEGIN_SRC sh
+    $ iex --sname bar --remsh foo@hostname
+    Erlang/OTP 19 ...
+
+    Interactive Elixir ...
+    iex(foo@hostname)1>
+  #+END_SRC
+  #+ATTR_REVEAL: :frag (roll-in roll-in)
+  New shell named ~bar~, but we connected to ~foo~.
+** Connecting to a remote shell from a session
+  #+BEGIN_SRC sh
+    $ iex --sname bar
+    Erlang/OTP 19 ...
+
+    Interactive Elixir (1.4.0) - press Ctrl+C to exit (type h() ENTER for help)
+    iex(bar@hostname)1>
+    ^G # Opens the User Switch prompt
+    User switch command
+     --> r 'foo@hostname' 'Elixir.IEx'
+     --> c
+    Interactive Elixir (1.4.0) - press Ctrl+C to exit (type h() ENTER for help)
+    iex(foo@hostname)1>
+  #+END_SRC
+
+

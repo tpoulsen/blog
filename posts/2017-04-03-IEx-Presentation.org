@@ -1,0 +1,23 @@
+---
+title: Getting the Most out of IEx
+tags: presentations, elixir, iex
+---
+
+In early March, we held the first [[http://elixirbaltimore.com][Baltimore Elixir and Erlang Meetup]]. As it was our first time doing something like this, we spent the early parts of the meetup introducing the group and ourselves. We also went around the room to get a sense of what the people that came out were hoping to get from the meetup. Finally, we had four few 5-10 minute lightning talks.
+
+A huge part of programming for me is REPL driven prototyping, so I gave a talk with a few tips on how to leverage IEx for interactive development.
+
+The slides can be viewed [[../presentations/getting_the_most_out_of_iex.html][here]].
+
+** Topics covered
+   + What is IEx?
+   + How to get help in IEx
+   + Using IEx to get around
+   + Reloading changes in modules
+   + Using a =.iex.exs= file
+   + Saving IEx history
+   + Reusing results from previous expressions
+   + Debugging
+   + Remote shells
+
+There are gifs and/or code examples for all of above points.

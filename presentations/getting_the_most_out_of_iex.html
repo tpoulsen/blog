@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>Getting the most out of IEx</title>
+<meta name="author" content="(Travis Poulsen)"/>
+<style type="text/css">
+.underline { text-decoration: underline; }
+</style>
+<link rel="stylesheet" href="http://cdn.jsdelivr.net/reveal.js/3.0.0/css/reveal.css"/>
+
+<link rel="stylesheet" href="http://cdn.jsdelivr.net/reveal.js/3.0.0/css/theme/solarized.css" id="theme"/>
+
+<link rel="stylesheet" href="../css/reveal.css"/>
+
+<!-- If the query includes 'print-pdf', include the PDF print sheet -->
+<script>
+    if( window.location.search.match( /print-pdf/gi ) ) {
+        var link = document.createElement( 'link' );
+        link.rel = 'stylesheet';
+        link.type = 'text/css';
+        link.href = 'http://cdn.jsdelivr.net/reveal.js/3.0.0/css/print/pdf.css';
+        document.getElementsByTagName( 'head' )[0].appendChild( link );
+    }
+</script>
+</head>
+<body>
+<div class="reveal">
+<div class="slides">
+<section id="sec-title-slide"><h1 class="title">Getting the most out of IEx</h1><h2 class="author">Travis Poulsen</h2><h2 class="date">2017-03-01</h2>
+</section>
+
+<section>
+<section id="slide-orgheadline2">
+<h2 id="orgheadline2">IEx?</h2>
+<p>
+IEx is Elixir's REPL
+</p>
+<p class="fragment (roll-in roll-in)">
+We can use it to interactively execute Elixir
+</p>
+</section>
+<section id="slide-orgheadline1" data-background="../images/iex/basic_iex.gif" data-background-size="900px" data-background-transition="slide">
+<h3 id="orgheadline1"></h3>
+</section>
+</section>
+<section>
+<section id="slide-orgheadline3">
+<h2 id="orgheadline3">How  can we most effectively use IEx?</h2>
+</section>
+</section>
+<section>
+<section id="slide-orgheadline7">
+<h2 id="orgheadline7">Get help</h2>
+<div class="outline-text-2" id="text-orgheadline7">
+</div></section>
+<section id="slide-orgheadline4">
+<h3 id="orgheadline4">Discovery</h3>
+<p>
+Tab completion
+</p>
+</section>
+<section id="slide-orgheadline6">
+<h3 id="orgheadline6">Documentation</h3>
+<p>
+Find out what a
+</p>
+<ul>
+<li>Module</li>
+<li>Function</li>
+<li>Macro</li>
+<li>Protocol</li>
+<li>etc…</li>
+
+</ul>
+<p>
+does
+</p>
+</section>
+<section id="slide-orgheadline5" data-background="../images/iex/get_help.gif" data-background-size="900px" data-background-transition="slide">
+<h4 id="orgheadline5"></h4>
+</section>
+</section>
+<section>
+<section id="slide-orgheadline9">
+<h2 id="orgheadline9">Navigate the file system</h2>
+<ul>
+<li><code>pwd/0</code></li>
+<li><code>ls/0, ls/1</code></li>
+<li><code>cd/1</code></li>
+
+</ul>
+</section>
+<section id="slide-orgheadline8" data-background="../images/iex/get_around.gif" data-background-size="900px" data-background-transition="slide">
+<h4 id="orgheadline8"></h4>
+</section>
+</section>
+<section>
+<section id="slide-orgheadline11">
+<h2 id="orgheadline11">Reload</h2>
+<p>
+Reload modules that are already compiled in the session
+</p>
+</section>
+<section id="slide-orgheadline10" data-background="../images/iex/reload.gif" data-background-size="900px" data-background-transition="slide">
+<h4 id="orgheadline10"></h4>
+</section>
+</section>
+<section>
+<section id="slide-orgheadline13">
+<h2 id="orgheadline13">Pre-evaluate code</h2>
+<p>
+With a <code>.iex.exs</code> file, you can pre-evaluate code during IEx initialization
+</p>
+
+<p class="fragment (roll-in roll-in)">
+IEx first attempts to load <code>./.iex.exs</code>, then <code>~/.iex.exs</code>.
+</p>
+
+<div class="org-src-container">
+
+<pre  class="fragment (roll-in roll-in)"><span style="color: #F0DFAF; font-weight: bold;">alias</span> <span style="color: #7CB8BB;">Bank.User</span>
+</pre>
+</div>
+
+</section>
+<section id="slide-orgheadline12" data-background="../images/iex/iex_exs.gif" data-background-size="900px" data-background-transition="slide">
+<h4 id="orgheadline12"></h4>
+</section>
+</section>
+<section>
+<section id="slide-orgheadline14">
+<h2 id="orgheadline14">Save history</h2>
+<p>
+By default, history is only available for the current session
+</p>
+
+<p class="fragment (roll-in roll-in)">
+<a href="https://github.com/ferd/erlang-history/" class="fragment (roll-in roll-in)">ferd/erlang-history</a>
+</p>
+<p class="fragment (roll-in roll-in)">
+Uses Erlang's dets module to save history
+</p>
+</section>
+</section>
+<section>
+<section id="slide-orgheadline15">
+<h2 id="orgheadline15">Capture previous results</h2>
+<ul>
+<li><code>v/0</code></li>
+<li><code>v/1</code></li>
+
+</ul>
+<div class="org-src-container">
+
+<pre  class="src src-elixir">iex<span style="color: #DCDCCC;">(</span><span style="color: #BFEBBF;">1</span><span style="color: #DCDCCC;">)</span>&gt; <span style="color: #BFEBBF;">4</span> + <span style="color: #BFEBBF;">4</span>
+<span style="color: #BFEBBF;">8</span>
+iex<span style="color: #DCDCCC;">(</span><span style="color: #BFEBBF;">2</span><span style="color: #DCDCCC;">)</span>&gt; <span style="color: #BFEBBF;">5</span> * <span style="color: #BFEBBF;">5</span>
+<span style="color: #BFEBBF;">25</span>
+iex<span style="color: #DCDCCC;">(</span><span style="color: #BFEBBF;">3</span><span style="color: #DCDCCC;">)</span>&gt; <span style="color: #DFAF8F;">x</span> = v<span style="color: #DCDCCC;">()</span>
+<span style="color: #BFEBBF;">25</span>
+iex<span style="color: #DCDCCC;">(</span><span style="color: #BFEBBF;">4</span><span style="color: #DCDCCC;">)</span>&gt; <span style="color: #DFAF8F;">y</span> = v<span style="color: #DCDCCC;">(</span><span style="color: #BFEBBF;">1</span><span style="color: #DCDCCC;">)</span>
+<span style="color: #BFEBBF;">8</span>
+iex<span style="color: #DCDCCC;">(</span><span style="color: #BFEBBF;">5</span><span style="color: #DCDCCC;">)</span>&gt; x + y
+<span style="color: #BFEBBF;">33</span>
+</pre>
+</div>
+</section>
+</section>
+<section>
+<section id="slide-orgheadline16">
+<h2 id="orgheadline16">Debug</h2>
+<p>
+<code>IEx.pry</code>
+</p>
+<div class="org-src-container">
+
+<pre  class="src src-elixir"><span style="color: #F0DFAF; font-weight: bold;">defmodule</span> <span style="color: #7CB8BB;">User</span> <span style="color: #F0DFAF; font-weight: bold;">do</span>
+  <span style="color: #F0DFAF; font-weight: bold;">def</span> <span style="color: #93E0E3;">hello</span><span style="color: #DCDCCC;">(</span>name<span style="color: #DCDCCC;">)</span> <span style="color: #F0DFAF; font-weight: bold;">do</span>
+    <span style="color: #F0DFAF; font-weight: bold;">require</span> <span style="color: #7CB8BB;">IEx</span>; <span style="color: #7CB8BB;">IEx</span>.pry
+
+    <span style="color: #CC9393;">"Hello </span><span style="color: #DFAF8F;">#{name}</span><span style="color: #CC9393;">!"</span>
+  <span style="color: #F0DFAF; font-weight: bold;">end</span>
+<span style="color: #F0DFAF; font-weight: bold;">end</span>
+</pre>
+</div>
+<p class="fragment (roll-in roll-in)">
+When the function is called, drop in at the point of <code>IEx.pry</code>
+</p>
+<div class="org-src-container">
+
+<pre  class="fragment (roll-in roll-in)">iex&gt; <span style="color: #7CB8BB;">User</span>.hello<span style="color: #DCDCCC;">(</span><span style="color: #CC9393;">"Jim"</span><span style="color: #DCDCCC;">)</span>
+...
+pry<span style="color: #DCDCCC;">(</span><span style="color: #BFEBBF;">1</span><span style="color: #DCDCCC;">)</span>&gt; name
+<span style="color: #CC9393;">"Jim"</span>
+</pre>
+</div>
+</section>
+</section>
+<section>
+<section id="slide-orgheadline20">
+<h2 id="orgheadline20">Remote shells</h2>
+<div class="outline-text-2" id="text-orgheadline20">
+</div></section>
+<section id="slide-orgheadline17">
+<h3 id="orgheadline17">Naming a shell</h3>
+<div class="org-src-container">
+
+<pre  class="src src-shell">$ iex --sname foo
+Erlang/OTP <span style="color: #BFEBBF;">19</span> ...
+
+Interactive Elixir ...
+<span style="color: #93E0E3;">iex</span><span style="color: #DCDCCC;">(</span>foo@hostname<span style="color: #DCDCCC;">)</span><span style="color: #BFEBBF;">1</span>&gt;
+</pre>
+</div>
+</section>
+<section id="slide-orgheadline18">
+<h3 id="orgheadline18">Connecting to a remote shell</h3>
+<div class="org-src-container">
+
+<pre  class="src src-sh">$ iex --sname bar --remsh foo@hostname
+Erlang/OTP <span style="color: #BFEBBF;">19</span> ...
+
+Interactive Elixir ...
+<span style="color: #93E0E3;">iex</span><span style="color: #DCDCCC;">(</span>foo@hostname<span style="color: #DCDCCC;">)</span><span style="color: #BFEBBF;">1</span>&gt;
+</pre>
+</div>
+<p class="fragment (roll-in roll-in)">
+New shell named <code>bar</code>, but we connected to <code>foo</code>.
+</p>
+</section>
+<section id="slide-orgheadline19">
+<h3 id="orgheadline19">Connecting to a remote shell from a session</h3>
+<div class="org-src-container">
+
+<pre  class="src src-sh">$ iex --sname bar
+Erlang/OTP <span style="color: #BFEBBF;">19</span> ...
+
+Interactive Elixir <span style="color: #DCDCCC;">(</span><span style="color: #BFEBBF;">1.4.0</span><span style="color: #DCDCCC;">)</span> - press Ctrl+C to exit <span style="color: #DCDCCC;">(</span><span style="color: #DCDCCC; font-weight: bold;">type</span> h<span style="color: #BFEBBF;">()</span> ENTER for help<span style="color: #DCDCCC;">)</span>
+<span style="color: #93E0E3;">iex</span><span style="color: #DCDCCC;">(</span>bar@hostname<span style="color: #DCDCCC;">)</span><span style="color: #BFEBBF;">1</span>&gt;
+^G <span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">Opens the User Switch prompt</span>
+User switch command
+ --&gt; r <span style="color: #CC9393;">'foo@hostname'</span> <span style="color: #CC9393;">'Elixir.IEx'</span>
+ --&gt; c
+Interactive Elixir <span style="color: #DCDCCC;">(</span><span style="color: #BFEBBF;">1.4.0</span><span style="color: #DCDCCC;">)</span> - press Ctrl+C to exit <span style="color: #DCDCCC;">(</span><span style="color: #DCDCCC; font-weight: bold;">type</span> h<span style="color: #BFEBBF;">()</span> ENTER for help<span style="color: #DCDCCC;">)</span>
+<span style="color: #93E0E3;">iex</span><span style="color: #DCDCCC;">(</span>foo@hostname<span style="color: #DCDCCC;">)</span><span style="color: #BFEBBF;">1</span>&gt;
+</pre>
+</div>
+</section>
+</section>
+</div>
+</div>
+<script src="http://cdn.jsdelivr.net/reveal.js/3.0.0/lib/js/head.min.js"></script>
+<script src="http://cdn.jsdelivr.net/reveal.js/3.0.0/js/reveal.js"></script>
+
+<script>
+// Full list of configuration options available here:
+// https://github.com/hakimel/reveal.js#configuration
+Reveal.initialize({
+
+controls: true,
+progress: true,
+history: false,
+center: true,
+slideNumber: 'c',
+rollingLinks: false,
+keyboard: true,
+overview: true,
+margin: 0.01,
+
+theme: Reveal.getQueryHash().theme, // available themes are in /css/theme
+transition: Reveal.getQueryHash().transition || 'default', // default/cube/page/concave/zoom/linear/fade/none
+transitionSpeed: 'default',
+multiplex: {
+    secret: '', // null if client
+    id: '', // id, obtained from socket.io server
+    url: '' // Location of socket.io server
+},
+
+// Optional libraries used to extend on reveal.js
+dependencies: [
+ { src: 'http://cdn.jsdelivr.net/reveal.js/3.0.0/lib/js/classList.js', condition: function() { return !document.body.classList; } },
+ { src: 'http://cdn.jsdelivr.net/reveal.js/3.0.0/plugin/markdown/marked.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+ { src: 'http://cdn.jsdelivr.net/reveal.js/3.0.0/plugin/markdown/markdown.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+ { src: 'http://cdn.jsdelivr.net/reveal.js/3.0.0/plugin/zoom-js/zoom.js', async: true, condition: function() { return !!document.body.classList; } },
+ { src: 'http://cdn.jsdelivr.net/reveal.js/3.0.0/plugin/notes/notes.js', async: true, condition: function() { return !!document.body.classList; } }]
+});
+</script>
+</body>
+</html>
