@@ -3,4 +3,4 @@ title: Introduction to GraphQL Presentation
 tags: graphql, presentations, elixir
 ---
 
-I gave a presentation today at work to introduce the rest of the company to GraphQL. Slides from the talk can be found [[../presentations/graphql.html][here]]. There's an accompanying GitHub repo that has a small demo GraphQL API written using Elixir, Absinthe, and Phoenix: [[https://github.com/tpoulsen/taxon-graphql][tpoulsen/taxon-graphql]]
+I gave a presentation today at work to introduce the rest of the company to GraphQL. Slides from the talk can be found [[https://travispoulsen.com/blog/presentations/graphql.html][here]]. There's an accompanying GitHub repo that has a small demo GraphQL API written using Elixir, Absinthe, and Phoenix: [[https://github.com/tpoulsen/taxon-graphql][tpoulsen/taxon-graphql]]

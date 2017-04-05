@@ -7,7 +7,7 @@ In early March, we held the first [[http://elixirbaltimore.com][Baltimore Elixir
 
 A huge part of programming for me is REPL driven prototyping, so I gave a talk with a few tips on how to leverage IEx for interactive development.
 
-The slides can be viewed [[../presentations/getting_the_most_out_of_iex.html][here]].
+The slides can be viewed [[https://travispoulsen.com/blog/presentations/getting_the_most_out_of_iex.html][here]].
 
 ** Topics covered
    + What is IEx?
