@@ -10,7 +10,7 @@
 #+SELECT_TAGS: export
 #+EXCLUDE_TAGS: noexport
 #+CREATOR: Emacs 24.5.2 (Org mode 8.3.4)
-#+REVEAL_ROOT: http://cdn.jsdelivr.net/reveal.js/3.0.0/
+#+REVEAL_ROOT: https://cdn.jsdelivr.net/reveal.js/3.0.0/
 #+BABEL: :session *js* :cache yes :results output :exports both :tangle yes \n
 #+REVEAL_THEME: solarized
 #+REVEAL_MARGIN: 0.005
