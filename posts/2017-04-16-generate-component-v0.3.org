@@ -1,0 +1,175 @@
+---
+title: generate-component v0.3.0
+tags: haskell, react, react native
+---
+
+* TL;DR
+  Over the weekend I released version 0.3.0 of the React component generator I [[https://travispoulsen.com/blog/posts/2016-11-06-React-Component-Generator.html][wrote about a few months ago]]. 
+
+  New features (subcommands, a config file, new component type generators, and propType insertion) are detailed below.
+
+  The release can be found [[https://github.com/tpoulsen/generate-component/releases/tag/v0.3.0.0][at the repo]].
+
+* generate-component v0.3.0
+  The updates in this version of the component generator came about after five months of use while working on a React Native project. During that time, I learned more about both what I want out of a component generator, and what ~generate-component~ lacked. The new config file provides quality of life improvements by reducing the need to supply common commands when generating new components. Other changes, including generators for different component types and propType arugments, make ~generate-component~ generally more useful.
+
+** Config file
+  Perhaps the biggest change is that ~generate-component~ now uses a YAML configuration file. The motivation behind the config file is in setting project defaults for project type, component directory, and component type.
+
+  An example config file[fn:4]:  
+  #+BEGIN_SRC yaml
+    # Type of the current project; determines what files will be
+    # generated for a component.
+    # Valid values: React | ReactNative
+    projectType: ReactNative
+
+    # Default directory in which to generate components.
+    defaultDirectory: app/components
+
+    # Style of components to generate
+    # Valid values: CreateClass | ES6Class | Functional
+    componentType: ES6Class
+  #+END_SRC
+
+*** Project Type
+    In previous versions, project type defaulted to React while a command line flag (~-n~) indicated a React Native project. For React Native projects, this meant that the flag had to be provided every time a component was generated. Now, the project type specified in the config file is the default. 
+
+    Valid project types are src_HASKELL{React | ReactNative}
+
+*** Default Directory
+    The default directory in which new components are generated is also specifiable in the config file. There is a command line option (~-d~) that overrides the default if provided.
+
+    Previously, the component was generated in relative to the current directory; now components are generated relative to the project root (determined by the presence of a ~node_modules~ directory).
+
+*** Component Types
+    The final config file option is the default component type. In previous versions, the only type of component that ~generate-component~ made was a functional component. Now, it is able to generate ES6 class style components, functional components, and (the deprecated) ~React.createClass~ components[fn:2]. The default type of component can be specified in the config file, but can be overridden by a command line argument (~-t~). 
+
+    Valid component types are: src_HASKELL{ES6Class | Functional | CreateClass}
+
+** Subcommands
+   ~generate-component~ now has two subcommands: ~init~ and ~gen~.
+
+   #+BEGIN_SRC sh
+     $ generate-component --help
+     Flexible generator for React/React-Native components. Generate ES6 class,
+     React.createClass, and functional components with optional proptypes and redux
+     containers.
+
+     Usage: generate-component COMMAND
+     Generate React/React-Native components
+
+     Available options:
+     -h,--help                Show this help text
+
+     Available commands:
+     init                     Create a config file
+     gen                      Generate a component
+   #+END_SRC
+
+   src_SH{generate-component init} is used to initialize generate component with a new config file. This should be run in the project's root directory.
+
+   src_SH{generate-component gen} is the command to actually generate a new component.
+  
+** Options for ~generate-component gen~
+   There are five optional arguments when generating a component[fn:1]:
+    
+   + ~-d~ ~--directory ARG~ :: where to generate the component; relative to the project root.
+   + ~-r~ ~--redux-container~ :: Generate a Redux connected container along with the component.
+   + ~-n~ ~--react-native~ :: A flag that indicates a React Native project; defaults to React.
+   + ~-t~ ~--component-type ARG~ :: Component type: src_HASKELL{ES6Class | Functional | CreateClass}
+   + ~-p~ ~--proptypes ARG~ :: ~name:type~ pairs of PropTypes for the component.
+
+** PropTypes[fn:3] 
+   Props and PropTypes for the component can now be specified from the command line. They are currently parsed as colon separated, ~name:propType~ pairs. Currently there is no validation check for PropTypes in the provided input. To provide multiple props, the argument needs to be quoted.
+**** Example
+      Using the config file from above:
+
+      #+BEGIN_SRC sh
+        $ generate-component gen Post -p "author:string title:string body:string"
+        Making directory at: /tmp/app/components/Post
+        Copying files...
+        Writing /tmp/app/components/Post/index.js...Done!
+        Writing /tmp/app/components/Post/Post.js...Done!
+        Writing /tmp/app/components/Post/styles.js...Done!
+        Done
+      #+END_SRC
+
+      =/tmp/app/components/Post/Post.js=:
+      #+BEGIN_SRC js
+        // @flow
+        /*
+          NOTE: This file was auto-generated for a component
+          named "Post"; it is intended to be modified as
+          needed to be useful.
+        ,*/
+
+        import React from 'react';
+        import PropTypes from 'prop-types';
+        import {View} from 'react-native';
+
+        import styles from './styles';
+
+        class Post extends Component {
+          static propTypes = {
+            author: PropTypes.string,
+            title: PropTypes.string,
+            body: PropTypes.string
+          };
+
+          render() {
+            return (
+                <View>
+                </View>
+            );
+          }
+        }
+
+        export default Post;
+      #+END_SRC
+
+      For functional components, the prop names get destructured as the argument to the function:
+      #+BEGIN_SRC sh
+        $ generate-component gen Comment -p "author:string comment:string id:number" -t Functional
+      #+END_SRC
+
+      =/tmp/app/components/Comment/Comment.js=:
+      #+BEGIN_SRC js
+        // @flow
+        /*
+          NOTE: This file was auto-generated for a component
+          named "Comment"; it is intended to be modified as
+          needed to be useful.
+        ,*/
+
+        import React from 'react';
+        import PropTypes from 'prop-types';
+        import {View} from 'react-native';
+
+        import styles from './styles';
+
+        const Comment = ({author, comment, id}) => (
+            <View>
+            </View>
+        );
+
+        Comment.propTypes = {
+          author: PropTypes.string,
+          comment: PropTypes.string,
+          id: PropTypes.number
+        };
+
+        export default Comment;
+      #+END_SRC
+
+* Conclusion
+  These updates to ~generate-component~ were added to make it both easier to use (config file) and more powerful (PropTypes, generators for multiple component types). I don't foresee major changes to the API at this point, just refinements to the internals. Given that no huge issues arise rollowing a short test period, this version will likely be promoted to v1.0.
+
+* Footnotes
+
+[fn:4] Generated with ~generate-component init~; modified from the default to change ~projectType~ to ~ReactNative~.
+
+[fn:3] To be compatible with current and future versions of React, PropTypes uses the [[https://www.npmjs.com/package/prop-types][prop-types]] package.
+
+[fn:2] The ~createClass~ components are generated importing the [[https://www.npmjs.com/package/create-react-class][create-react-class]] package, making it compatible with the current React release ([[https://facebook.github.io/react/blog/2017/04/07/react-v15.5.0.html][15.5]]), and the next (16.0).
+
+[fn:1] Six, including ~-h~ ~--help~.
