@@ -1,0 +1,383 @@
+#+OPTIONS: ':nil *:t -:t ::t <:t H:3 \n:nil ^:t arch:headline author:t c:nil
+#+OPTIONS: creator:nil d:(not "LOGBOOK") date:t e:t email:nil f:t inline:t
+#+OPTIONS: num:nil p:nil pri:nil prop:nil stat:t tags:t tasks:t tex:t timestamp:nil
+#+OPTIONS: title:t toc:nil todo:t |:t
+#+TITLE: generate-component
+#+DATE: 2017-04-20
+#+AUTHOR: Travis Poulsen
+#+EMAIL: travis@smartlogic.io
+#+LANGUAGE: en
+#+SELECT_TAGS: export
+#+EXCLUDE_TAGS: noexport
+#+CREATOR: Emacs 24.5.2 (Org mode 8.3.4)
+#+REVEAL_ROOT: https://cdn.jsdelivr.net/reveal.js/3.0.0/
+#+BABEL: :session *js* :cache yes :results output :exports both :tangle yes \n
+#+REVEAL_THEME: solarized
+#+REVEAL_MARGIN: 0.005
+#+REVEAL_EXTRA_CSS: ../css/reveal.css
+#+REVEAL_PLUGINS: (notes)
+
+* Roadmap 
++ Motivation
++ The code
++ Demo
+
+* Motivation
+** Inspiration
+ Phoenix/Rails generators
+#+BEGIN_SRC sh
+  mix phoenix.gen.json Post posts title:string content:string
+
+  rails generate scaffold Post title:string author:string
+#+END_SRC
+** Reduce boilerplate
+#+ATTR_REVEAL: :frag (roll-in)
+*boilerplate* /(n)/ - standardized pieces of text for use as … part of a computer program
+*** A Component
+#+BEGIN_SRC js
+  import React, {Component} from 'react';
+  import PropTypes from 'prop-types';
+
+  class Foo extends Component {
+    static propTypes = {
+      foo: PropTypes.string.isRequired,
+      bar: PropTypes.arrayOf(PropTypes.number),
+      baz: PropTypes.func.isRequired,
+    }
+
+    render() {
+      return (
+        <div>
+          <span>{this.props.foo}</span>
+          <button onClick={this.props.baz}>
+            Click me!
+          </button>
+          <ul>
+            {this.props.bar.map((n) => <li>n</li>)}
+          </ul>
+        </div>
+      )
+    }
+  }
+  export default Foo;
+#+END_SRC
+
+#+BEGIN_NOTES
+  In this (admittedly trivial) component, more than half of the LOC are boilerplate
+#+END_NOTES
+*** The unique bit
+#+BEGIN_SRC js
+  <div>
+    <span>{this.props.foo}</span>
+    <button onClick={this.props.baz}>
+      Click me!
+    </button>
+    <ul>
+      {this.props.bar.map((n) => <li>n</li>)}
+    </ul>
+  </div>
+#+END_SRC
+#+BEGIN_NOTES
+  The unique part is what the component is rendering
+#+END_NOTES
+*** The boilerplate
+#+BEGIN_SRC js
+  import React, {Component} from 'react';
+  import PropTypes from 'prop-types';
+
+  class Foo extends Component {
+    static propTypes = {
+      foo: PropTypes.string.isRequired,
+      bar: PropTypes.arrayOf(PropTypes.number),
+      baz: PropTypes.func.isRequired,
+    }
+
+    render() {
+      return (
+        {UNIQUE BIT HERE}
+      )
+    }
+  }
+  export default Foo;
+#+END_SRC
+#+BEGIN_NOTES
+All of the imports, component declaration, PropType declarations, and even the render function are standard.
+
+Even when components grow very large and full of other functions, lifecycle methods, etc…, the basic setup has to be present.
+
+For a recent React Native project, we have > 70 components.
+#+END_NOTES
+*** Why?
+*** 
+:PROPERTIES:
+:reveal_background: https://imgs.xkcd.com/comics/automation.png
+:reveal_background_size: 700px
+:reveal_background_trans: slide
+:END:
+* The Code
+** Requirements
++ Project Type
++ Component Name
++ Directory
++ Component Type
++ Redux
++ Props
+*** Project Type
+React and React Native are similar, but different
+
+#+ATTR_REVEAL: :frag (roll-in roll-in roll-in)
+At a boilerplate level:
+
+#+ATTR_REVEAL: :frag (roll-in roll-in roll-in)
++ Imports
++ Built-in components
++ Styles
+*** React
+#+BEGIN_SRC js
+  import React from 'react';
+  import PropTypes from 'prop-types';
+
+  const Component = ({prop1, prop2}) => (
+      <div>
+      </div>
+  );
+
+  Component.propTypes = {
+    prop1: PropTypes.string,
+    prop2: PropTypes.string,
+  };
+
+  export default Component;
+#+END_SRC
+*** React Native
+#+BEGIN_SRC js
+  import React from 'react';
+  import PropTypes from 'prop-types';
+  import {View} from 'react-native';
+
+  import styles from './styles';
+
+  const Component = ({prop1, prop2}) => (
+      <View>
+      </View>
+  );
+
+  Component.propTypes = {
+    prop1: PropTypes.string,
+    prop2: PropTypes.string,
+  };
+
+  export default Component;
+#+END_SRC
+
+*** Component Name / Directory
++ Specify the component's name
++ Specify where the component gets created
+
+*** Component Type
++ ES6 Classes
+  + The preferred method
++ Functional
+  + Stateless
++ createClass
+  + Deprecated
+*** Redux integration
+Optionally, create a Redux connected component
+#+BEGIN_SRC js
+  import {connect} from 'react-redux';
+
+  import Component from './Component';
+
+  const mapStateToProps = (state: Object) => {
+    return {};
+  };
+
+  const mapDispatchToProps = (dispatch) => {
+    return {
+      fn: () => {dispatch();},
+    }
+  };
+
+  const ComponentContainer = connect(
+    mapStateToProps,
+    mapDispatchToProps,
+  )(Component);
+
+  export default ComponentContainer;
+#+END_SRC
+*** Props
+Would be nice to be able to specify component props and propTypes in the generator command
+#+ATTR_REVEAL: :frag (roll-in roll-in roll-in)
+#+BEGIN_SRC sh
+  $ generate-component gen Post -p \
+       "author:string.isRequired title:string.isRequired leaveComment:func"
+#+END_SRC
+#+ATTR_REVEAL: :frag (roll-in roll-in roll-in)
+#+BEGIN_SRC js
+  static propTypes = {
+    author: PropTypes.string.isRequired,
+    title: PropTypes.string.isRequired,
+    leaveComment: PropTypes.func,
+  }
+#+END_SRC
+* Modeling the Commands
+** The Basic CLI
+#+BEGIN_SRC sh
+  $ generate-component gen Post
+  #                     |    |
+  #                Command   |
+  #                     Component Name
+#+END_SRC
+** The Basic CLI
+#+BEGIN_SRC sh
+  $ generate-component gen Post -d app/scenes -t ES6Class -c
+  #                     |    |        |              |     |
+  #                Command   |    Directory          |   Redux
+  #                     Component Name         Component Type
+#+END_SRC
+** The Basic CLI
+#+BEGIN_SRC sh
+  $ generate-component gen Post -p "author:string title:string content:string"
+  #                     |    |         |            |     |
+  #                Command   |       Props          |  PropType
+  #                     Component Name          Prop Name
+#+END_SRC
+** Parsing and Validating
+Some arguments are optional
+#+ATTR_REVEAL: :frag (roll-in)
+  + ~-c~ - Redux
+  + ~-p~ - PropTypes
+  + ~-d~ - Directory
+
+Some must be elements of a set of values
+#+ATTR_REVEAL: :frag (roll-in)
+  + ~-t~ ∈ ~{ES6Class, Functional, CreateClass}~
+  + ~-n~ ∈ ~{React, ReactNative}~
+** Leveraging Haskell's type system
+#+ATTR_REVEAL: :frag (roll-in)
+#+BEGIN_SRC haskell
+  data ProjectType = React | ReactNative
+#+END_SRC
+
+#+ATTR_REVEAL: :frag (roll-in)
+#+BEGIN_SRC haskell
+  data ComponentType = ES6Class | CreateClass | Functional
+#+END_SRC
+
+#+ATTR_REVEAL: :frag (roll-in)
+#+BEGIN_SRC haskell
+  data Prop = Prop
+    { name     :: Text
+    , propType :: Text
+    }
+#+END_SRC
+
+#+ATTR_REVEAL: :frag (roll-in)
+#+BEGIN_SRC haskell
+  data Settings = Settings
+    { sComponentName :: Text
+    , sComponentDir  :: Maybe FilePath
+    , sMakeContainer :: Bool
+    , sProjectType   :: ProjectType
+    , sComponentType :: Maybe ComponentType
+    , sPropTypes     :: Maybe [Prop]
+    }
+#+END_SRC
+* Determine Files to Write
+** 
+:PROPERTIES:
+:reveal_background: ../images/generateComponent/flowchart.png
+:reveal_background_size: 1200px
+:reveal_background_trans: slide
+:END:
+** Determine Files to Write
+#+BEGIN_SRC haskell
+  {--| Determines which templates to create based on command line arguments. --}
+
+  determineTemplatesToGenerate :: Settings -> [Template]
+  determineTemplatesToGenerate settings =
+    ...
+#+END_SRC
+** A Template
+#+BEGIN_SRC haskell
+  functionalNativeComponent :: Maybe [Prop] -> Template
+  functionalNativeComponent p = Template "COMPONENT.js" [qc|
+  // @flow
+  // NOTE: This file was auto-generated
+
+  import React from 'react';
+  import PropTypes from 'prop-types';
+  import \{View} from 'react-native';
+
+  import styles from './styles';
+
+  const COMPONENT = (\{{propNames p}}) => (
+    <View>
+    </View>
+  );
+
+  COMPONENT.propTypes = \{
+    {stringifyPropTypes 2 p}
+  };
+
+  export default COMPONENT;
+  |]
+#+END_SRC
+* Component Name & Props
+** Replace Placeholders
+~COMPONENT~ is a placeholder in the filename and template:
+#+BEGIN_SRC haskell
+  ...
+    sanitizedFileName = replacePlaceholder (filename template)
+    sanitizedTemplate = replacePlaceholder (contents template)
+  ...
+
+  replacePlaceholderText :: Text -> Text -> Text
+  replacePlaceholderText template =
+    replace "COMPONENT" template
+#+END_SRC
+** Inject Props
+#+BEGIN_SRC haskell
+  data Prop = Prop
+    { name     :: Text
+    , propType :: Text
+    }
+
+  stringifyPropTypes :: Int -> Maybe [Prop] -> Text
+  stringifyPropTypes nSpaces ts =
+    case ts of
+      Nothing -> ""
+      Just xs -> intercalate (",\n" <> spaces) $ pack . show <$> xs
+    where spaces = pack . take nSpaces $ cycle " "
+
+  propNames :: Maybe [Prop] -> Text
+  propNames ts =
+    case ts of
+      Nothing -> ""
+      Just xs -> intercalate ", " $ fmap (^. name) xs
+#+END_SRC
+* Write the Files
+#+BEGIN_SRC haskell
+  generateComponent :: Settings -> Template -> IO OSFilePath
+  generateComponent settings template =
+    writeTemplateFile (componentPath </> fromText sanitizedFileName) sanitizedTemplate
+    where componentPath = fromJust $ settings ^. sComponentDir
+          componentName = settings ^. sComponentName
+          sanitizedFileName = replacePlaceholder (filename template)
+          sanitizedTemplate = replacePlaceholder (contents template)
+          replacePlaceholder = replacePlaceholderText componentName
+
+  writeTemplateFile :: OSFilePath -> Text -> IO OSFilePath
+  writeTemplateFile dest src = do
+    printf ("Writing\t"%s) (format fp dest)
+    writeTextFile dest src
+    echo "...Done!"
+    return dest
+#+END_SRC
+* Requirements
++ 👍 Project Type
++ 👍 Redux
++ 👍 Component Type
++ 👍 Component Name
++ 👍 Props
++ 👍 Directory
