@@ -381,3 +381,7 @@ Some must be elements of a set of values
 + 👍 Component Name
 + 👍 Props
 + 👍 Directory
+* Links
++  Blog post :: https://travispoulsen.com/blog/posts/2017-04-16-generate-component-v0.3.html
++  GitHub :: https://github.com/tpoulsen/generate-component
++  XKCD Automation :: https://xkcd.com/1319/
