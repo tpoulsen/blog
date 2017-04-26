@@ -1,6 +1,6 @@
 #!/bin/bash
 set -x
-if [[ !$TRAVIS_PULL_REQUEST && $TRAVIS_BRANCH == 'master' ]] ; then
+if [[ !$TRAVIS_PULL_REQUEST && $TRAVIS_BRANCH == "master" ]] ; then
   # initalize new repo in _site and push to server
   cd _site
   git init

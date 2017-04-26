@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>generate-component</title>
+<meta name="author" content="(Travis Poulsen)"/>
+<style type="text/css">
+.underline { text-decoration: underline; }
+</style>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/reveal.js/3.0.0/css/reveal.css"/>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/reveal.js/3.0.0/css/theme/solarized.css" id="theme"/>
+
+<link rel="stylesheet" href="../css/reveal.css"/>
+
+<!-- If the query includes 'print-pdf', include the PDF print sheet -->
+<script>
+    if( window.location.search.match( /print-pdf/gi ) ) {
+        var link = document.createElement( 'link' );
+        link.rel = 'stylesheet';
+        link.type = 'text/css';
+        link.href = 'https://cdn.jsdelivr.net/reveal.js/3.0.0/css/print/pdf.css';
+        document.getElementsByTagName( 'head' )[0].appendChild( link );
+    }
+</script>
+</head>
+<body>
+<div class="reveal">
+<div class="slides">
+<section id="sec-title-slide"><h1 class="title">generate-component</h1><h2 class="author">Travis Poulsen</h2><h2 class="date">2017-04-20</h2>
+</section>
+
+<section>
+<section id="slide-orgheadline1">
+<h2 id="orgheadline1">Roadmap</h2>
+<ul>
+<li>Motivation</li>
+<li>The code</li>
+<li>Demo</li>
+
+</ul>
+
+</section>
+</section>
+<section>
+<section id="slide-orgheadline9">
+<h2 id="orgheadline9">Motivation</h2>
+<div class="outline-text-2" id="text-orgheadline9">
+</div></section>
+<section id="slide-orgheadline2">
+<h3 id="orgheadline2">Inspiration</h3>
+<p>
+Phoenix/Rails generators
+</p>
+<div class="org-src-container">
+
+<pre  class="src src-sh">mix phoenix.gen.json Post posts title:string content:string
+
+rails generate scaffold Post title:string author:string
+</pre>
+</div>
+</section>
+<section id="slide-orgheadline8">
+<h3 id="orgheadline8">Reduce boilerplate</h3>
+<p class="fragment (roll-in)">
+<b>boilerplate</b> <i>(n)</i> - standardized pieces of text for use as … part of a computer program
+</p>
+</section>
+<section id="slide-orgheadline3">
+<h4 id="orgheadline3">A Component</h4>
+<div class="org-src-container">
+
+<pre  class="src src-js"><span style="color: #F0DFAF; font-weight: bold;">import</span> React, <span style="color: #DCDCCC;">{</span>Component<span style="color: #DCDCCC;">}</span> from <span style="color: #CC9393;">'react'</span>;
+<span style="color: #F0DFAF; font-weight: bold;">import</span> PropTypes from <span style="color: #CC9393;">'prop-types'</span>;
+
+<span style="color: #F0DFAF; font-weight: bold;">class</span> Foo <span style="color: #F0DFAF; font-weight: bold;">extends</span> Component <span style="color: #DCDCCC;">{</span>
+  <span style="color: #F0DFAF; font-weight: bold;">static</span> propTypes = <span style="color: #BFEBBF;">{</span>
+    foo: PropTypes.string.isRequired,
+    bar: PropTypes.arrayOf<span style="color: #D0BF8F;">(</span>PropTypes.number<span style="color: #D0BF8F;">)</span>,
+    baz: PropTypes.func.isRequired,
+  <span style="color: #BFEBBF;">}</span>
+
+  render<span style="color: #BFEBBF;">()</span> <span style="color: #BFEBBF;">{</span>
+    <span style="color: #F0DFAF; font-weight: bold;">return</span> <span style="color: #D0BF8F;">(</span>
+      &lt;div&gt;
+        &lt;span&gt;<span style="color: #93E0E3;">{</span><span style="color: #BFEBBF;">this</span>.props.foo<span style="color: #93E0E3;">}</span>&lt;/span&gt;
+        &lt;button onClick=<span style="color: #93E0E3;">{</span><span style="color: #BFEBBF;">this</span>.props.baz<span style="color: #93E0E3;">}</span>&gt;
+          Click me!
+        &lt;/button&gt;
+        &lt;ul&gt;
+          <span style="color: #93E0E3;">{</span><span style="color: #BFEBBF;">this</span>.props.bar.map<span style="color: #9FC59F;">(</span><span style="color: #94BFF3;">(</span>n<span style="color: #94BFF3;">)</span> =&gt; &lt;li&gt;n&lt;/li&gt;<span style="color: #9FC59F;">)</span><span style="color: #93E0E3;">}</span>
+        &lt;/ul&gt;
+      &lt;/div&gt;
+    <span style="color: #D0BF8F;">)</span>
+  <span style="color: #BFEBBF;">}</span>
+<span style="color: #DCDCCC;">}</span>
+<span style="color: #F0DFAF; font-weight: bold;">export</span> <span style="color: #F0DFAF; font-weight: bold;">default</span> Foo;
+</pre>
+</div>
+
+<aside class="notes">
+<p>
+In this (admittedly trivial) component, more than half of the LOC are boilerplate
+</p>
+
+</aside>
+</section>
+<section id="slide-orgheadline4">
+<h4 id="orgheadline4">The unique bit</h4>
+<div class="org-src-container">
+
+<pre  class="src src-js">&lt;div&gt;
+  &lt;span&gt;<span style="color: #DCDCCC;">{</span><span style="color: #BFEBBF;">this</span>.props.foo<span style="color: #DCDCCC;">}</span>&lt;/span&gt;
+  &lt;button onClick=<span style="color: #DCDCCC;">{</span><span style="color: #BFEBBF;">this</span>.props.baz<span style="color: #DCDCCC;">}</span>&gt;
+    Click me!
+  &lt;/button&gt;
+  &lt;ul&gt;
+    <span style="color: #DCDCCC;">{</span><span style="color: #BFEBBF;">this</span>.props.bar.map<span style="color: #BFEBBF;">(</span><span style="color: #D0BF8F;">(</span>n<span style="color: #D0BF8F;">)</span> =&gt; &lt;li&gt;n&lt;/li&gt;<span style="color: #BFEBBF;">)</span><span style="color: #DCDCCC;">}</span>
+  &lt;/ul&gt;
+&lt;/div&gt;
+</pre>
+</div>
+<aside class="notes">
+<p>
+The unique part is what the component is rendering
+</p>
+
+</aside>
+</section>
+<section id="slide-orgheadline5">
+<h4 id="orgheadline5">The boilerplate</h4>
+<div class="org-src-container">
+
+<pre  class="src src-js"><span style="color: #F0DFAF; font-weight: bold;">import</span> React, <span style="color: #DCDCCC;">{</span>Component<span style="color: #DCDCCC;">}</span> from <span style="color: #CC9393;">'react'</span>;
+<span style="color: #F0DFAF; font-weight: bold;">import</span> PropTypes from <span style="color: #CC9393;">'prop-types'</span>;
+
+<span style="color: #F0DFAF; font-weight: bold;">class</span> Foo <span style="color: #F0DFAF; font-weight: bold;">extends</span> Component <span style="color: #DCDCCC;">{</span>
+  <span style="color: #F0DFAF; font-weight: bold;">static</span> propTypes = <span style="color: #BFEBBF;">{</span>
+    foo: PropTypes.string.isRequired,
+    bar: PropTypes.arrayOf<span style="color: #D0BF8F;">(</span>PropTypes.number<span style="color: #D0BF8F;">)</span>,
+    baz: PropTypes.func.isRequired,
+  <span style="color: #BFEBBF;">}</span>
+
+  render<span style="color: #BFEBBF;">()</span> <span style="color: #BFEBBF;">{</span>
+    <span style="color: #F0DFAF; font-weight: bold;">return</span> <span style="color: #D0BF8F;">(</span>
+      <span style="color: #93E0E3;">{</span>UNIQUE BIT HERE<span style="color: #93E0E3;">}</span>
+    <span style="color: #D0BF8F;">)</span>
+  <span style="color: #BFEBBF;">}</span>
+<span style="color: #DCDCCC;">}</span>
+<span style="color: #F0DFAF; font-weight: bold;">export</span> <span style="color: #F0DFAF; font-weight: bold;">default</span> Foo;
+</pre>
+</div>
+<aside class="notes">
+<p>
+All of the imports, component declaration, PropType declarations, and even the render function are standard.
+</p>
+
+<p>
+Even when components grow very large and full of other functions, lifecycle methods, etc…, the basic setup has to be present.
+</p>
+
+<p>
+For a recent React Native project, we have &gt; 70 components.
+</p>
+
+</aside>
+</section>
+<section id="slide-orgheadline6">
+<h4 id="orgheadline6">Why?</h4>
+</section>
+<section id="slide-orgheadline7" data-background="https://imgs.xkcd.com/comics/automation.png" data-background-size="700px" data-background-transition="slide">
+<h4 id="orgheadline7"></h4>
+</section>
+</section>
+<section>
+<section id="slide-orgheadline18">
+<h2 id="orgheadline18">The Code</h2>
+<div class="outline-text-2" id="text-orgheadline18">
+</div></section>
+<section id="slide-orgheadline17">
+<h3 id="orgheadline17">Requirements</h3>
+<ul>
+<li>Project Type</li>
+<li>Component Name</li>
+<li>Directory</li>
+<li>Component Type</li>
+<li>Redux</li>
+<li>Props</li>
+
+</ul>
+</section>
+<section id="slide-orgheadline10">
+<h4 id="orgheadline10">Project Type</h4>
+<p>
+React and React Native are similar, but different
+</p>
+
+<p class="fragment (roll-in roll-in roll-in)">
+At a boilerplate level:
+</p>
+
+<ul>
+<li class="fragment roll-in">Imports</li>
+<li class="fragment roll-in">Built-in components</li>
+<li class="fragment roll-in">Styles</li>
+
+</ul>
+</section>
+<section id="slide-orgheadline11">
+<h4 id="orgheadline11">React</h4>
+<div class="org-src-container">
+
+<pre  class="src src-js"><span style="color: #F0DFAF; font-weight: bold;">import</span> React from <span style="color: #CC9393;">'react'</span>;
+<span style="color: #F0DFAF; font-weight: bold;">import</span> PropTypes from <span style="color: #CC9393;">'prop-types'</span>;
+
+<span style="color: #F0DFAF; font-weight: bold;">const</span> <span style="color: #DFAF8F;">Component</span> = <span style="color: #DCDCCC;">(</span><span style="color: #BFEBBF;">{</span>prop1, prop2<span style="color: #BFEBBF;">}</span><span style="color: #DCDCCC;">)</span> =&gt; <span style="color: #DCDCCC;">(</span>
+    &lt;div&gt;
+    &lt;/div&gt;
+<span style="color: #DCDCCC;">)</span>;
+
+Component.propTypes = <span style="color: #DCDCCC;">{</span>
+  prop1: PropTypes.string,
+  prop2: PropTypes.string,
+<span style="color: #DCDCCC;">}</span>;
+
+<span style="color: #F0DFAF; font-weight: bold;">export</span> <span style="color: #F0DFAF; font-weight: bold;">default</span> Component;
+</pre>
+</div>
+</section>
+<section id="slide-orgheadline12">
+<h4 id="orgheadline12">React Native</h4>
+<div class="org-src-container">
+
+<pre  class="src src-js"><span style="color: #F0DFAF; font-weight: bold;">import</span> React from <span style="color: #CC9393;">'react'</span>;
+<span style="color: #F0DFAF; font-weight: bold;">import</span> PropTypes from <span style="color: #CC9393;">'prop-types'</span>;
+<span style="color: #F0DFAF; font-weight: bold;">import</span> <span style="color: #DCDCCC;">{</span>View<span style="color: #DCDCCC;">}</span> from <span style="color: #CC9393;">'react-native'</span>;
+
+<span style="color: #F0DFAF; font-weight: bold;">import</span> styles from <span style="color: #CC9393;">'./styles'</span>;
+
+<span style="color: #F0DFAF; font-weight: bold;">const</span> <span style="color: #DFAF8F;">Component</span> = <span style="color: #DCDCCC;">(</span><span style="color: #BFEBBF;">{</span>prop1, prop2<span style="color: #BFEBBF;">}</span><span style="color: #DCDCCC;">)</span> =&gt; <span style="color: #DCDCCC;">(</span>
+    &lt;View&gt;
+    &lt;/View&gt;
+<span style="color: #DCDCCC;">)</span>;
+
+Component.propTypes = <span style="color: #DCDCCC;">{</span>
+  prop1: PropTypes.string,
+  prop2: PropTypes.string,
+<span style="color: #DCDCCC;">}</span>;
+
+<span style="color: #F0DFAF; font-weight: bold;">export</span> <span style="color: #F0DFAF; font-weight: bold;">default</span> Component;
+</pre>
+</div>
+
+</section>
+<section id="slide-orgheadline13">
+<h4 id="orgheadline13">Component Name / Directory</h4>
+<ul>
+<li>Specify the component's name</li>
+<li>Specify where the component gets created</li>
+
+</ul>
+
+</section>
+<section id="slide-orgheadline14">
+<h4 id="orgheadline14">Component Type</h4>
+<ul>
+<li>ES6 Classes
+<ul>
+<li>The preferred method</li>
+
+</ul></li>
+<li>Functional
+<ul>
+<li>Stateless</li>
+
+</ul></li>
+<li>createClass
+<ul>
+<li>Deprecated</li>
+
+</ul></li>
+
+</ul>
+</section>
+<section id="slide-orgheadline15">
+<h4 id="orgheadline15">Redux integration</h4>
+<p>
+Optionally, create a Redux connected component
+</p>
+<div class="org-src-container">
+
+<pre  class="src src-js"><span style="color: #F0DFAF; font-weight: bold;">import</span> <span style="color: #DCDCCC;">{</span>connect<span style="color: #DCDCCC;">}</span> from <span style="color: #CC9393;">'react-redux'</span>;
+
+<span style="color: #F0DFAF; font-weight: bold;">import</span> Component from <span style="color: #CC9393;">'./Component'</span>;
+
+<span style="color: #F0DFAF; font-weight: bold;">const</span> <span style="color: #DFAF8F;">mapStateToProps</span> = <span style="color: #DCDCCC;">(</span>state: Object<span style="color: #DCDCCC;">)</span> =&gt; <span style="color: #DCDCCC;">{</span>
+  <span style="color: #F0DFAF; font-weight: bold;">return</span> <span style="color: #BFEBBF;">{}</span>;
+<span style="color: #DCDCCC;">}</span>;
+
+<span style="color: #F0DFAF; font-weight: bold;">const</span> <span style="color: #DFAF8F;">mapDispatchToProps</span> = <span style="color: #DCDCCC;">(</span>dispatch<span style="color: #DCDCCC;">)</span> =&gt; <span style="color: #DCDCCC;">{</span>
+  <span style="color: #F0DFAF; font-weight: bold;">return</span> <span style="color: #BFEBBF;">{</span>
+    fn: <span style="color: #D0BF8F;">()</span> =&gt; <span style="color: #D0BF8F;">{</span>dispatch<span style="color: #93E0E3;">()</span>;<span style="color: #D0BF8F;">}</span>,
+  <span style="color: #BFEBBF;">}</span>
+<span style="color: #DCDCCC;">}</span>;
+
+<span style="color: #F0DFAF; font-weight: bold;">const</span> <span style="color: #DFAF8F;">ComponentContainer</span> = connect<span style="color: #DCDCCC;">(</span>
+  mapStateToProps,
+  mapDispatchToProps,
+<span style="color: #DCDCCC;">)(</span>Component<span style="color: #DCDCCC;">)</span>;
+
+<span style="color: #F0DFAF; font-weight: bold;">export</span> <span style="color: #F0DFAF; font-weight: bold;">default</span> ComponentContainer;
+</pre>
+</div>
+</section>
+<section id="slide-orgheadline16">
+<h4 id="orgheadline16">Props</h4>
+<p>
+Would be nice to be able to specify component props and propTypes in the generator command
+</p>
+<div class="org-src-container">
+
+<pre  class="fragment (roll-in roll-in roll-in)">$ generate-component gen Post -p <span style="color: #CC9393;">\</span>
+     <span style="color: #CC9393;">"author:string.isRequired title:string.isRequired leaveComment:func"</span>
+</pre>
+</div>
+<div class="org-src-container">
+
+<pre  class="fragment (roll-in roll-in roll-in)"><span style="color: #F0DFAF; font-weight: bold;">static</span> propTypes = <span style="color: #DCDCCC;">{</span>
+  author: PropTypes.string.isRequired,
+  title: PropTypes.string.isRequired,
+  leaveComment: PropTypes.func,
+<span style="color: #DCDCCC;">}</span>
+</pre>
+</div>
+</section>
+</section>
+<section>
+<section id="slide-orgheadline24">
+<h2 id="orgheadline24">Modeling the Commands</h2>
+<div class="outline-text-2" id="text-orgheadline24">
+</div></section>
+<section id="slide-orgheadline19">
+<h3 id="orgheadline19">The Basic CLI</h3>
+<div class="org-src-container">
+
+<pre  class="src src-sh">$ generate-component gen Post
+<span style="color: #5F7F5F;">#                     </span><span style="color: #7F9F7F;">|    |</span>
+<span style="color: #5F7F5F;">#                </span><span style="color: #7F9F7F;">Command   |</span>
+<span style="color: #5F7F5F;">#                     </span><span style="color: #7F9F7F;">Component Name</span>
+</pre>
+</div>
+</section>
+<section id="slide-orgheadline20">
+<h3 id="orgheadline20">The Basic CLI</h3>
+<div class="org-src-container">
+
+<pre  class="src src-sh">$ generate-component gen Post -d app/scenes -t ES6Class -c
+<span style="color: #5F7F5F;">#                     </span><span style="color: #7F9F7F;">|    |        |              |     |</span>
+<span style="color: #5F7F5F;">#                </span><span style="color: #7F9F7F;">Command   |    Directory          |   Redux</span>
+<span style="color: #5F7F5F;">#                     </span><span style="color: #7F9F7F;">Component Name         Component Type</span>
+</pre>
+</div>
+</section>
+<section id="slide-orgheadline21">
+<h3 id="orgheadline21">The Basic CLI</h3>
+<div class="org-src-container">
+
+<pre  class="src src-sh">$ generate-component gen Post -p <span style="color: #CC9393;">"author:string title:string content:string"</span>
+<span style="color: #5F7F5F;">#                     </span><span style="color: #7F9F7F;">|    |         |            |     |</span>
+<span style="color: #5F7F5F;">#                </span><span style="color: #7F9F7F;">Command   |       Props          |  PropType</span>
+<span style="color: #5F7F5F;">#                     </span><span style="color: #7F9F7F;">Component Name          Prop Name</span>
+</pre>
+</div>
+</section>
+<section id="slide-orgheadline22">
+<h3 id="orgheadline22">Parsing and Validating</h3>
+<p>
+Some arguments are optional
+</p>
+<ul>
+<li class="fragment roll-in"><code>-c</code> - Redux</li>
+<li class="fragment roll-in"><code>-p</code> - PropTypes</li>
+<li class="fragment roll-in"><code>-d</code> - Directory</li>
+
+</ul>
+
+<p>
+Some must be elements of a set of values
+</p>
+<ul>
+<li class="fragment roll-in"><code>-t</code> ∈ <code>{ES6Class, Functional, CreateClass}</code></li>
+<li class="fragment roll-in"><code>-n</code> ∈ <code>{React, ReactNative}</code></li>
+
+</ul>
+</section>
+<section id="slide-orgheadline23">
+<h3 id="orgheadline23">Leveraging Haskell's type system</h3>
+<div class="org-src-container">
+
+<pre  class="fragment (roll-in)"><span style="color: #F0DFAF; font-weight: bold;">data</span> <span style="color: #7CB8BB;">ProjectType</span> <span style="color: #DFAF8F;">=</span> <span style="color: #7CB8BB;">React</span> <span style="color: #DFAF8F;">|</span> <span style="color: #7CB8BB;">ReactNative</span>
+</pre>
+</div>
+
+<div class="org-src-container">
+
+<pre  class="fragment (roll-in)"><span style="color: #F0DFAF; font-weight: bold;">data</span> <span style="color: #7CB8BB;">ComponentType</span> <span style="color: #DFAF8F;">=</span> <span style="color: #7CB8BB;">ES6Class</span> <span style="color: #DFAF8F;">|</span> <span style="color: #7CB8BB;">CreateClass</span> <span style="color: #DFAF8F;">|</span> <span style="color: #7CB8BB;">Functional</span>
+</pre>
+</div>
+
+<div class="org-src-container">
+
+<pre  class="fragment (roll-in)"><span style="color: #F0DFAF; font-weight: bold;">data</span> <span style="color: #7CB8BB;">Prop</span> <span style="color: #DFAF8F;">=</span> <span style="color: #7CB8BB;">Prop</span>
+  <span style="color: #DCDCCC;">{</span> name     <span style="color: #DFAF8F;">::</span> <span style="color: #7CB8BB;">Text</span>
+  , propType <span style="color: #DFAF8F;">::</span> <span style="color: #7CB8BB;">Text</span>
+  <span style="color: #DCDCCC;">}</span>
+</pre>
+</div>
+
+<div class="org-src-container">
+
+<pre  class="fragment (roll-in)"><span style="color: #F0DFAF; font-weight: bold;">data</span> <span style="color: #7CB8BB;">Settings</span> <span style="color: #DFAF8F;">=</span> <span style="color: #7CB8BB;">Settings</span>
+  <span style="color: #DCDCCC;">{</span> sComponentName <span style="color: #DFAF8F;">::</span> <span style="color: #7CB8BB;">Text</span>
+  , sComponentDir  <span style="color: #DFAF8F;">::</span> <span style="color: #7CB8BB;">Maybe</span> <span style="color: #7CB8BB;">FilePath</span>
+  , sMakeContainer <span style="color: #DFAF8F;">::</span> <span style="color: #7CB8BB;">Bool</span>
+  , sProjectType   <span style="color: #DFAF8F;">::</span> <span style="color: #7CB8BB;">ProjectType</span>
+  , sComponentType <span style="color: #DFAF8F;">::</span> <span style="color: #7CB8BB;">Maybe</span> <span style="color: #7CB8BB;">ComponentType</span>
+  , sPropTypes     <span style="color: #DFAF8F;">::</span> <span style="color: #7CB8BB;">Maybe</span> <span style="color: #BFEBBF;">[</span><span style="color: #7CB8BB;">Prop</span><span style="color: #BFEBBF;">]</span>
+  <span style="color: #DCDCCC;">}</span>
+</pre>
+</div>
+</section>
+</section>
+<section>
+<section id="slide-orgheadline28">
+<h2 id="orgheadline28">Determine Files to Write</h2>
+<div class="outline-text-2" id="text-orgheadline28">
+</div></section>
+<section id="slide-orgheadline25" data-background="../images/generateComponent/flowchart.png" data-background-size="1200px" data-background-transition="slide">
+<h3 id="orgheadline25"></h3>
+</section>
+<section id="slide-orgheadline26">
+<h3 id="orgheadline26">Determine Files to Write</h3>
+<div class="org-src-container">
+
+<pre  class="src src-haskell"><span style="color: #5F7F5F;">{-</span><span style="color: #7F9F7F;">-| Determines which templates to create based on command line arguments. --}</span>
+
+<span style="color: #93E0E3;">determineTemplatesToGenerate</span> <span style="color: #DFAF8F;">::</span> <span style="color: #7CB8BB;">Settings</span> <span style="color: #DFAF8F;">-&gt;</span> <span style="color: #DCDCCC;">[</span><span style="color: #7CB8BB;">Template</span><span style="color: #DCDCCC;">]</span>
+<span style="color: #93E0E3;">determineTemplatesToGenerate</span> settings <span style="color: #DFAF8F;">=</span>
+  <span style="color: #DFAF8F;">...</span>
+</pre>
+</div>
+</section>
+<section id="slide-orgheadline27">
+<h3 id="orgheadline27">A Template</h3>
+<div class="org-src-container">
+
+<pre  class="src src-haskell"><span style="color: #93E0E3;">functionalNativeComponent</span> <span style="color: #DFAF8F;">::</span> <span style="color: #7CB8BB;">Maybe</span> <span style="color: #DCDCCC;">[</span><span style="color: #7CB8BB;">Prop</span><span style="color: #DCDCCC;">]</span> <span style="color: #DFAF8F;">-&gt;</span> <span style="color: #7CB8BB;">Template</span>
+<span style="color: #93E0E3;">functionalNativeComponent</span> p <span style="color: #DFAF8F;">=</span> <span style="color: #7CB8BB;">Template</span> <span style="color: #CC9393;">"COMPONENT.js"</span> <span style="color: #DCDCCC;">[</span>qc<span style="color: #CC9393;">|</span>
+<span style="color: #CC9393;">// @flow</span>
+<span style="color: #CC9393;">// </span><span style="color: #d0bf8f;">NOTE</span><span style="color: #CC9393;">: This file was auto-generated</span>
+
+<span style="color: #CC9393;">import React from 'react';</span>
+<span style="color: #CC9393;">import PropTypes from 'prop-types';</span>
+<span style="color: #CC9393;">import \{View} from 'react-native';</span>
+
+<span style="color: #CC9393;">import styles from './styles';</span>
+
+<span style="color: #CC9393;">const COMPONENT = (\{{propNames p}}) =&gt; (</span>
+<span style="color: #CC9393;">  &lt;View&gt;</span>
+<span style="color: #CC9393;">  &lt;/View&gt;</span>
+<span style="color: #CC9393;">);</span>
+
+<span style="color: #CC9393;">COMPONENT.propTypes = \{</span>
+<span style="color: #CC9393;">  {stringifyPropTypes 2 p}</span>
+<span style="color: #CC9393;">};</span>
+
+<span style="color: #CC9393;">export default COMPONENT;</span>
+<span style="color: #CC9393;">|</span><span style="color: #DCDCCC;">]</span>
+</pre>
+</div>
+</section>
+</section>
+<section>
+<section id="slide-orgheadline31">
+<h2 id="orgheadline31">Component Name &amp; Props</h2>
+<div class="outline-text-2" id="text-orgheadline31">
+</div></section>
+<section id="slide-orgheadline29">
+<h3 id="orgheadline29">Replace Placeholders</h3>
+<p>
+<code>COMPONENT</code> is a placeholder in the filename and template:
+</p>
+<div class="org-src-container">
+
+<pre  class="src src-haskell"><span style="color: #DFAF8F;">...</span>
+  sanitizedFileName <span style="color: #DFAF8F;">=</span> replacePlaceholder <span style="color: #DCDCCC;">(</span>filename template<span style="color: #DCDCCC;">)</span>
+  sanitizedTemplate <span style="color: #DFAF8F;">=</span> replacePlaceholder <span style="color: #DCDCCC;">(</span>contents template<span style="color: #DCDCCC;">)</span>
+<span style="color: #DFAF8F;">...</span>
+
+<span style="color: #93E0E3;">replacePlaceholderText</span> <span style="color: #DFAF8F;">::</span> <span style="color: #7CB8BB;">Text</span> <span style="color: #DFAF8F;">-&gt;</span> <span style="color: #7CB8BB;">Text</span> <span style="color: #DFAF8F;">-&gt;</span> <span style="color: #7CB8BB;">Text</span>
+<span style="color: #93E0E3;">replacePlaceholderText</span> template <span style="color: #DFAF8F;">=</span>
+  replace <span style="color: #CC9393;">"COMPONENT"</span> template
+</pre>
+</div>
+</section>
+<section id="slide-orgheadline30">
+<h3 id="orgheadline30">Inject Props</h3>
+<div class="org-src-container">
+
+<pre  class="src src-haskell"><span style="color: #F0DFAF; font-weight: bold;">data</span> <span style="color: #7CB8BB;">Prop</span> <span style="color: #DFAF8F;">=</span> <span style="color: #7CB8BB;">Prop</span>
+  <span style="color: #DCDCCC;">{</span> name     <span style="color: #DFAF8F;">::</span> <span style="color: #7CB8BB;">Text</span>
+  , propType <span style="color: #DFAF8F;">::</span> <span style="color: #7CB8BB;">Text</span>
+  <span style="color: #DCDCCC;">}</span>
+
+<span style="color: #93E0E3;">stringifyPropTypes</span> <span style="color: #DFAF8F;">::</span> <span style="color: #7CB8BB;">Int</span> <span style="color: #DFAF8F;">-&gt;</span> <span style="color: #7CB8BB;">Maybe</span> <span style="color: #DCDCCC;">[</span><span style="color: #7CB8BB;">Prop</span><span style="color: #DCDCCC;">]</span> <span style="color: #DFAF8F;">-&gt;</span> <span style="color: #7CB8BB;">Text</span>
+<span style="color: #93E0E3;">stringifyPropTypes</span> nSpaces ts <span style="color: #DFAF8F;">=</span>
+  <span style="color: #F0DFAF; font-weight: bold;">case</span> ts <span style="color: #F0DFAF; font-weight: bold;">of</span>
+    <span style="color: #7CB8BB;">Nothing</span> <span style="color: #DFAF8F;">-&gt;</span> <span style="color: #CC9393;">""</span>
+    <span style="color: #7CB8BB;">Just</span> xs <span style="color: #DFAF8F;">-&gt;</span> intercalate <span style="color: #DCDCCC;">(</span><span style="color: #CC9393;">",\n"</span> <span style="color: #DFAF8F;">&lt;&gt;</span> spaces<span style="color: #DCDCCC;">)</span> <span style="color: #DFAF8F;">$</span> pack <span style="color: #DFAF8F;">.</span> show <span style="color: #DFAF8F;">&lt;$&gt;</span> xs
+  <span style="color: #F0DFAF; font-weight: bold;">where</span> spaces <span style="color: #DFAF8F;">=</span> pack <span style="color: #DFAF8F;">.</span> take nSpaces <span style="color: #DFAF8F;">$</span> cycle <span style="color: #CC9393;">" "</span>
+
+<span style="color: #93E0E3;">propNames</span> <span style="color: #DFAF8F;">::</span> <span style="color: #7CB8BB;">Maybe</span> <span style="color: #DCDCCC;">[</span><span style="color: #7CB8BB;">Prop</span><span style="color: #DCDCCC;">]</span> <span style="color: #DFAF8F;">-&gt;</span> <span style="color: #7CB8BB;">Text</span>
+<span style="color: #93E0E3;">propNames</span> ts <span style="color: #DFAF8F;">=</span>
+  <span style="color: #F0DFAF; font-weight: bold;">case</span> ts <span style="color: #F0DFAF; font-weight: bold;">of</span>
+    <span style="color: #7CB8BB;">Nothing</span> <span style="color: #DFAF8F;">-&gt;</span> <span style="color: #CC9393;">""</span>
+    <span style="color: #7CB8BB;">Just</span> xs <span style="color: #DFAF8F;">-&gt;</span> intercalate <span style="color: #CC9393;">", "</span> <span style="color: #DFAF8F;">$</span> fmap <span style="color: #DCDCCC;">(</span><span style="color: #DFAF8F;">^.</span> name<span style="color: #DCDCCC;">)</span> xs
+</pre>
+</div>
+</section>
+</section>
+<section>
+<section id="slide-orgheadline32">
+<h2 id="orgheadline32">Write the Files</h2>
+<div class="org-src-container">
+
+<pre  class="src src-haskell"><span style="color: #93E0E3;">generateComponent</span> <span style="color: #DFAF8F;">::</span> <span style="color: #7CB8BB;">Settings</span> <span style="color: #DFAF8F;">-&gt;</span> <span style="color: #7CB8BB;">Template</span> <span style="color: #DFAF8F;">-&gt;</span> <span style="color: #7CB8BB;">IO</span> <span style="color: #7CB8BB;">OSFilePath</span>
+<span style="color: #93E0E3;">generateComponent</span> settings template <span style="color: #DFAF8F;">=</span>
+  writeTemplateFile <span style="color: #DCDCCC;">(</span>componentPath <span style="color: #DFAF8F;">&lt;/&gt;</span> fromText sanitizedFileName<span style="color: #DCDCCC;">)</span> sanitizedTemplate
+  <span style="color: #F0DFAF; font-weight: bold;">where</span> componentPath <span style="color: #DFAF8F;">=</span> fromJust <span style="color: #DFAF8F;">$</span> settings <span style="color: #DFAF8F;">^.</span> sComponentDir
+        componentName <span style="color: #DFAF8F;">=</span> settings <span style="color: #DFAF8F;">^.</span> sComponentName
+        sanitizedFileName <span style="color: #DFAF8F;">=</span> replacePlaceholder <span style="color: #DCDCCC;">(</span>filename template<span style="color: #DCDCCC;">)</span>
+        sanitizedTemplate <span style="color: #DFAF8F;">=</span> replacePlaceholder <span style="color: #DCDCCC;">(</span>contents template<span style="color: #DCDCCC;">)</span>
+        replacePlaceholder <span style="color: #DFAF8F;">=</span> replacePlaceholderText componentName
+
+<span style="color: #93E0E3;">writeTemplateFile</span> <span style="color: #DFAF8F;">::</span> <span style="color: #7CB8BB;">OSFilePath</span> <span style="color: #DFAF8F;">-&gt;</span> <span style="color: #7CB8BB;">Text</span> <span style="color: #DFAF8F;">-&gt;</span> <span style="color: #7CB8BB;">IO</span> <span style="color: #7CB8BB;">OSFilePath</span>
+<span style="color: #93E0E3;">writeTemplateFile</span> dest src <span style="color: #DFAF8F;">=</span> <span style="color: #F0DFAF; font-weight: bold;">do</span>
+  printf <span style="color: #DCDCCC;">(</span><span style="color: #CC9393;">"Writing\t"</span><span style="color: #DFAF8F;">%</span>s<span style="color: #DCDCCC;">)</span> <span style="color: #DCDCCC;">(</span>format fp dest<span style="color: #DCDCCC;">)</span>
+  writeTextFile dest src
+  echo <span style="color: #CC9393;">"...Done!"</span>
+  return dest
+</pre>
+</div>
+</section>
+</section>
+<section>
+<section id="slide-orgheadline33">
+<h2 id="orgheadline33">Requirements</h2>
+<ul>
+<li>👍 Project Type</li>
+<li>👍 Redux</li>
+<li>👍 Component Type</li>
+<li>👍 Component Name</li>
+<li>👍 Props</li>
+<li>👍 Directory</li>
+
+</ul>
+</section>
+</section>
+<section>
+<section id="slide-orgheadline34">
+<h2 id="orgheadline34">Links</h2>
+<dl>
+<dt>Blog post</dt><dd><a href="https://travispoulsen.com/blog/posts/2017-04-16-generate-component-v0.3.html">https://travispoulsen.com/blog/posts/2017-04-16-generate-component-v0.3.html</a></dd>
+<dt>GitHub</dt><dd><a href="https://github.com/tpoulsen/generate-component">https://github.com/tpoulsen/generate-component</a></dd>
+<dt>XKCD Automation</dt><dd><a href="https://xkcd.com/1319/">https://xkcd.com/1319/</a></dd>
+
+</dl>
+</section>
+</section>
+</div>
+</div>
+<script src="https://cdn.jsdelivr.net/reveal.js/3.0.0/lib/js/head.min.js"></script>
+<script src="https://cdn.jsdelivr.net/reveal.js/3.0.0/js/reveal.js"></script>
+
+<script>
+// Full list of configuration options available here:
+// https://github.com/hakimel/reveal.js#configuration
+Reveal.initialize({
+
+controls: true,
+progress: true,
+history: false,
+center: true,
+slideNumber: 'c',
+rollingLinks: false,
+keyboard: true,
+overview: true,
+margin: 0.01,
+
+theme: Reveal.getQueryHash().theme, // available themes are in /css/theme
+transition: Reveal.getQueryHash().transition || 'default', // default/cube/page/concave/zoom/linear/fade/none
+transitionSpeed: 'default',
+multiplex: {
+    secret: '', // null if client
+    id: '', // id, obtained from socket.io server
+    url: '' // Location of socket.io server
+},
+
+// Optional libraries used to extend on reveal.js
+dependencies: [
+ { src: 'https://cdn.jsdelivr.net/reveal.js/3.0.0/plugin/notes/notes.js', async: true, condition: function() { return !!document.body.classList; } }]
+});
+</script>
+</body>
+</html>
