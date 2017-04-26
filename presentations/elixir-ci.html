@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>Elixir and CI</title>
+<meta name="author" content="(Travis Poulsen)"/>
+<style type="text/css">
+.underline { text-decoration: underline; }
+</style>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/reveal.js/3.0.0/css/reveal.css"/>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/reveal.js/3.0.0/css/theme/solarized.css" id="theme"/>
+
+<link rel="stylesheet" href="../css/reveal.css"/>
+
+<!-- If the query includes 'print-pdf', include the PDF print sheet -->
+<script>
+    if( window.location.search.match( /print-pdf/gi ) ) {
+        var link = document.createElement( 'link' );
+        link.rel = 'stylesheet';
+        link.type = 'text/css';
+        link.href = 'https://cdn.jsdelivr.net/reveal.js/3.0.0/css/print/pdf.css';
+        document.getElementsByTagName( 'head' )[0].appendChild( link );
+    }
+</script>
+</head>
+<body>
+<div class="reveal">
+<div class="slides">
+<section id="sec-title-slide"><h1 class="title">Elixir and CI</h1><h2 class="author">Travis Poulsen</h2><h2 class="date">2017-04-26</h2>
+</section>
+
+<section>
+<section id="slide-orgheadline3">
+<h2 id="orgheadline3">CI?</h2>
+<div class="outline-text-2" id="text-orgheadline3">
+</div></section>
+<section id="slide-orgheadline2">
+<h3 id="orgheadline2">Continuous Integration</h3>
+<ul>
+<li class="fragment roll-in">To reduce risks of conflicts, code is merged often and built/tested by an automated system.</li>
+<li class="fragment roll-in">Can be coupled with continuous deployment.</li>
+
+</ul>
+</section>
+<section id="slide-orgheadline1" data-background="https://bluecanvas.io/images/CI-vs-CD-salesforce.png" data-background-size="1000px" data-background-transition="slide">
+<h4 id="orgheadline1"></h4>
+</section>
+</section>
+<section>
+<section id="slide-orgheadline7">
+<h2 id="orgheadline7">Why bother with CI?</h2>
+<div class="outline-text-2" id="text-orgheadline7">
+</div></section>
+<section id="slide-orgheadline5">
+<h3 id="orgheadline5">Stop problems early</h3>
+<p>
+Some work up front, but you can catch bugs before they get into your <code>master</code> branch.
+</p>
+<ul>
+<li class="fragment roll-in">Especially important when doing continuous deployment</li>
+
+</ul>
+</section>
+<section id="slide-orgheadline4">
+<h4 id="orgheadline4">Caveat</h4>
+<p>
+CI is only as good as your tests/build settings. 
+</p>
+</section>
+<section id="slide-orgheadline6">
+<h3 id="orgheadline6">Automate and offload your testing</h3>
+<p>
+Long running processes can do their thing on the build server/service and not block you locally.
+</p>
+
+
+<div class="figure">
+<p><img src="https://imgs.xkcd.com/comics/compiling.png" alt="compiling.png" />
+</p>
+</div>
+<ul>
+<li class="fragment roll-in"><code>s/compiling/testing/g</code></li>
+
+</ul>
+</section>
+</section>
+<section>
+<section id="slide-orgheadline14">
+<h2 id="orgheadline14">CI as a service</h2>
+<div class="outline-text-2" id="text-orgheadline14">
+</div></section>
+<section id="slide-orgheadline8">
+<h3 id="orgheadline8">The two major players</h3>
+<ul>
+<li>Travis CI</li>
+<li>CircleCI</li>
+
+</ul>
+
+</section>
+<section id="slide-orgheadline9">
+<h3 id="orgheadline9">Similarities</h3>
+<ul>
+<li>Both founded in 2011.</li>
+<li>Easily integrate with projects on GitHub</li>
+<li>Good documentation</li>
+<li>Configure with yaml</li>
+<li>Offer free builds for open source projects</li>
+<li>Containerized builds/Docker support*</li>
+
+</ul>
+</section>
+<section id="slide-orgheadline12">
+<h3 id="orgheadline12">Differences</h3>
+<div class="outline-text-3" id="text-orgheadline12">
+</div></section>
+<section id="slide-orgheadline10">
+<h4 id="orgheadline10">Travis CI</h4>
+<ul>
+<li>No private builds as part of their free plan</li>
+<li>OS X builds as part of free plan</li>
+<li>Easy build matrix config
+<ul>
+<li>build against multiple compilers, OSes, etc</li>
+
+</ul></li>
+<li><a href="https://docs.travis-ci.com/user/languages/elixir/">Supports</a> Elixir out of the box</li>
+
+</ul>
+</section>
+<section id="slide-orgheadline11">
+<h4 id="orgheadline11">CircleCI</h4>
+<ul>
+<li>Free builds for private repositories</li>
+<li>Charges to build on OS X</li>
+<li>A little harder to configure for Elixir
+<ul>
+<li>Supports Elixir with proper configuration file in v1</li>
+<li>Will have better Elixir support via Docker with <a href="https://circleci.com/docs/2.0/language-elixir/">v2.0</a></li>
+
+</ul></li>
+
+</ul>
+</section>
+<section id="slide-orgheadline13">
+<h3 id="orgheadline13">Which to choose?</h3>
+<p>
+Well&#x2026;
+</p>
+<p class="fragment (roll-in)">
+why not both?
+</p>
+
+<p class="fragment (roll-in)">
+Need to build a private repo?
+</p>
+<ul>
+<li class="fragment roll-in">CircleCI</li>
+
+</ul>
+
+<p class="fragment (roll-in)">
+Need to build for OS X?
+</p>
+<ul>
+<li class="fragment roll-in">Travis CI</li>
+
+</ul>
+</section>
+</section>
+<section>
+<section id="slide-orgheadline19">
+<h2 id="orgheadline19">Set up</h2>
+<div class="outline-text-2" id="text-orgheadline19">
+</div></section>
+<section id="slide-orgheadline15">
+<h3 id="orgheadline15">From square one</h3>
+<ul>
+<li>Auth with GitHub or BitBucket (CircleCI only)</li>
+<li>Grant access to the repo you want to test</li>
+
+</ul>
+</section>
+<section id="slide-orgheadline18">
+<h3 id="orgheadline18">Configuration</h3>
+<p>
+At the most basic level
+</p>
+</section>
+<section id="slide-orgheadline16">
+<h4 id="orgheadline16">CircleCI</h4>
+<p>
+Tries to infer what type of project you're building and tries to run the common tests.
+</p>
+
+<p class="fragment (roll-in)">
+But&#x2026;
+</p>
+
+<div class="figure">
+<p><img src="../images/ci_presentation/circle_fail.png" alt="circle_fail.png" class="fragment (roll-in)" />
+</p>
+</div>
+<p class="fragment (roll-in)">
+Doesn't work for Elixir
+</p>
+</section>
+<section id="slide-orgheadline17">
+<h4 id="orgheadline17">Travis CI</h4>
+<p>
+Specify the language you're working in and it tries to run default installation and testing
+</p>
+
+<p class="fragment (roll-in)">
+<code>.travis.yml</code>
+</p>
+<div class="org-src-container">
+
+<pre  class="fragment (roll-in)"><span style="color: #DFAF8F;">language</span>: elixir
+</pre>
+</div>
+
+<p class="fragment (roll-in)">
+But&#x2026;
+</p>
+<p class="fragment (roll-in)">
+Tries to use Elixir v1.0.4 by default.
+</p>
+</section>
+</section>
+<section>
+<section id="slide-orgheadline24">
+<h2 id="orgheadline24">So, clearly, more work to do</h2>
+<div class="outline-text-2" id="text-orgheadline24">
+</div></section>
+<section id="slide-orgheadline20">
+<h3 id="orgheadline20">Travis CI, take 2</h3>
+<p>
+<code>.travis.yml</code>
+</p>
+<div class="org-src-container">
+
+<pre  class="src src-yaml"><span style="color: #DFAF8F;">language</span>: elixir
+<span style="color: #DFAF8F;">elixir</span>:
+  - 1.4 <span style="color: #5F7F5F;"># </span><span style="color: #7F9F7F;">your version here</span>
+</pre>
+</div>
+
+<div class="figure">
+<p><img src="../images/ci_presentation/travis_min_success.png" alt="travis_min_success.png" class="fragment (roll-in)" />
+</p>
+</div>
+</section>
+<section id="slide-orgheadline23">
+<h3 id="orgheadline23">CircleCI, take 2</h3>
+<p>
+No native support in CircleCI today. 
+</p>
+<p class="fragment (roll-in roll-in)">
+Use a version manager (e.g. <a href="https://github.com/asdf-vm/asdf" class="fragment (roll-in roll-in)">asdf</a>) to install Erlang and Elixir.
+</p>
+<p class="fragment (roll-in)">
+Manually trigger the build by telling CircleCI what commands to run.
+</p>
+</section>
+<section id="slide-orgheadline21">
+<h4 id="orgheadline21">circle.yml</h4>
+<div class="org-src-container">
+
+<pre  class="src src-yaml"><span style="color: #DFAF8F;">machine</span>:
+  <span style="color: #DFAF8F;">environment</span>:
+    <span style="color: #DFAF8F;">PATH</span>: <span style="color: #CC9393;">"$HOME/.asdf/bin:$HOME/.asdf/shims:$PATH"</span>
+<span style="color: #DFAF8F;">dependencies</span>:
+  <span style="color: #DFAF8F;">cache_directories</span>:
+    - ~/.asdf
+  <span style="color: #DFAF8F;">pre</span>:
+    - if ! asdf | grep version; then git clone https://github.com/HashNuke/asdf.git ~/.asdf; fi
+    - if ! asdf plugin-list | grep erlang; then asdf plugin-add erlang https://github.com/HashNuke/asdf-erlang.git; fi
+    - if ! asdf plugin-list | grep elixir; then asdf plugin-add elixir https://github.com/HashNuke/asdf-elixir.git; fi
+    - erlang_version=$(awk <span style="color: #CC9393;">'/erlang/ { print $2 }'</span> .tool-versions) &amp;&amp; asdf install erlang ${erlang_version}
+    - elixir_version=$(awk <span style="color: #CC9393;">'/elixir/ { print $2 }'</span> .tool-versions) &amp;&amp; asdf install elixir ${elixir_version}
+    - yes | mix deps.get
+    - yes | mix local.rebar
+<span style="color: #DFAF8F;">test</span>:
+  <span style="color: #DFAF8F;">override</span>:
+    - mix test
+</pre>
+</div>
+<div class="org-src-container">
+
+<pre  class="src src-sh">erlang <span style="color: #BFEBBF;">19.2</span>
+elixir <span style="color: #BFEBBF;">1.4.1</span>
+</pre>
+</div>
+</section>
+<section id="slide-orgheadline22">
+<h4 id="orgheadline22">circle.yml v.2</h4>
+<p>
+Works with the CircleCI 2.0 beta currently:
+</p>
+<div class="org-src-container">
+
+<pre  class="src src-yaml"><span style="color: #DFAF8F;">version</span>: 2
+<span style="color: #DFAF8F;">jobs</span>:
+  <span style="color: #DFAF8F;">build</span>:
+    <span style="color: #DFAF8F;">working_directory</span>: ~/ci_demo
+    <span style="color: #DFAF8F;">docker</span>:
+      - <span style="color: #DFAF8F;">image</span>: trenpixster/elixir:1.4.1
+    <span style="color: #DFAF8F;">steps</span>:
+      - checkout
+      - <span style="color: #DFAF8F;">run</span>: mix deps.get
+      - <span style="color: #DFAF8F;">run</span>: mix test
+</pre>
+</div>
+</section>
+</section>
+<section>
+<section id="slide-orgheadline25">
+<h2 id="orgheadline25">References</h2>
+<dl>
+<dt>CI/CD image</dt><dd><a href="https://bluecanvas.io/continuous-integration-salesforce.html">https://bluecanvas.io/continuous-integration-salesforce.html</a></dd>
+<dt>xkcd - compiling</dt><dd><a href="https://xkcd.com/303/">https://xkcd.com/303/</a></dd>
+<dt>CircleCI docs</dt><dd><a href="https://circleci.com/docs/1.0/">https://circleci.com/docs/1.0/</a></dd>
+<dt>Travis CI docs</dt><dd><a href="https://docs.travis-ci.com/">https://docs.travis-ci.com/</a></dd>
+
+</dl>
+</section>
+</section>
+</div>
+</div>
+<script src="https://cdn.jsdelivr.net/reveal.js/3.0.0/lib/js/head.min.js"></script>
+<script src="https://cdn.jsdelivr.net/reveal.js/3.0.0/js/reveal.js"></script>
+
+<script>
+// Full list of configuration options available here:
+// https://github.com/hakimel/reveal.js#configuration
+Reveal.initialize({
+
+controls: true,
+progress: true,
+history: false,
+center: true,
+slideNumber: 'c',
+rollingLinks: false,
+keyboard: true,
+overview: true,
+margin: 0.01,
+
+theme: Reveal.getQueryHash().theme, // available themes are in /css/theme
+transition: Reveal.getQueryHash().transition || 'default', // default/cube/page/concave/zoom/linear/fade/none
+transitionSpeed: 'default',
+multiplex: {
+    secret: '', // null if client
+    id: '', // id, obtained from socket.io server
+    url: '' // Location of socket.io server
+},
+
+// Optional libraries used to extend on reveal.js
+dependencies: [
+ { src: 'https://cdn.jsdelivr.net/reveal.js/3.0.0/plugin/notes/notes.js', async: true, condition: function() { return !!document.body.classList; } }]
+});
+</script>
+</body>
+</html>

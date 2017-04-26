@@ -1,0 +1,170 @@
+#+OPTIONS: ':nil *:t -:t ::t <:t H:3 \n:nil ^:t arch:headline author:t c:nil
+#+OPTIONS: creator:nil d:(not "LOGBOOK") date:t e:t email:nil f:t inline:t
+#+OPTIONS: num:nil p:nil pri:nil prop:nil stat:t tags:t tasks:t tex:t timestamp:nil
+#+OPTIONS: title:t toc:nil todo:t |:t
+#+TITLE: Elixir and CI 
+#+DATE: 2017-04-26
+#+AUTHOR: Travis Poulsen
+#+EMAIL: travis@smartlogic.io
+#+LANGUAGE: en
+#+SELECT_TAGS: export
+#+EXCLUDE_TAGS: noexport
+#+CREATOR: Emacs 24.5.2 (Org mode 8.3.4)
+#+REVEAL_ROOT: https://cdn.jsdelivr.net/reveal.js/3.0.0/
+#+BABEL: :session *js* :cache yes :results output :exports both :tangle yes \n
+#+REVEAL_THEME: solarized
+#+REVEAL_MARGIN: 0.005
+#+REVEAL_EXTRA_CSS: ../css/reveal.css
+#+REVEAL_PLUGINS: (notes)
+
+* CI?
+** Continuous Integration
+#+ATTR_REVEAL: :frag (roll-in)
++ To reduce risks of conflicts, code is merged often and built/tested by an automated system.
++ Can be coupled with continuous deployment.
+*** 
+:PROPERTIES:
+:reveal_background: https://bluecanvas.io/images/CI-vs-CD-salesforce.png
+:reveal_background_size: 1000px
+:reveal_background_trans: slide
+:END:
+* Why bother with CI?
+** Stop problems early
+Some work up front, but you can catch bugs before they get into your ~master~ branch.
+#+ATTR_REVEAL: :frag (roll-in)
++ Especially important when doing continuous deployment
+*** Caveat
+CI is only as good as your tests/build settings. 
+** Automate and offload your testing
+Long running processes can do their thing on the build server/service and not block you locally.
+
+https://imgs.xkcd.com/comics/compiling.png
+#+ATTR_REVEAL: :frag (roll-in)
++ ~s/compiling/testing/g~
+* CI as a service
+** The two major players
++ Travis CI
++ CircleCI
+
+** Similarities
++ Both founded in 2011.
++ Easily integrate with projects on GitHub
++ Good documentation
++ Configure with yaml
++ Offer free builds for open source projects
++ Containerized builds/Docker support*
+** Differences
+*** Travis CI
++ No private builds as part of their free plan
++ OS X builds as part of free plan
++ Easy build matrix config
+  + build against multiple compilers, OSes, etc
++ [[https://docs.travis-ci.com/user/languages/elixir/][Supports]] Elixir out of the box
+*** CircleCI
++ Free builds for private repositories
++ Charges to build on OS X
++ A little harder to configure for Elixir
+  + Supports Elixir with proper configuration file in v1
+  + Will have better Elixir support via Docker with [[https://circleci.com/docs/2.0/language-elixir/][v2.0]]
+** Which to choose?
+Well...
+#+ATTR_REVEAL: :frag (roll-in)
+why not both?
+
+#+ATTR_REVEAL: :frag (roll-in)
+Need to build a private repo?
+#+ATTR_REVEAL: :frag (roll-in)
+  - CircleCI
+
+#+ATTR_REVEAL: :frag (roll-in)
+Need to build for OS X?
+#+ATTR_REVEAL: :frag (roll-in)
+  - Travis CI
+* Set up
+** From square one
++ Auth with GitHub or BitBucket (CircleCI only)
++ Grant access to the repo you want to test
+** Configuration
+At the most basic level
+*** CircleCI
+Tries to infer what type of project you're building and tries to run the common tests.
+
+#+ATTR_REVEAL: :frag (roll-in)
+But...
+#+ATTR_REVEAL: :frag (roll-in)
+[[file:../images/ci_presentation/circle_fail.png]]
+#+ATTR_REVEAL: :frag (roll-in)
+Doesn't work for Elixir
+*** Travis CI
+Specify the language you're working in and it tries to run default installation and testing
+
+#+ATTR_REVEAL: :frag (roll-in)
+~.travis.yml~
+#+ATTR_REVEAL: :frag (roll-in)
+#+BEGIN_SRC yaml
+  language: elixir
+#+END_SRC
+
+#+ATTR_REVEAL: :frag (roll-in)
+But...
+#+ATTR_REVEAL: :frag (roll-in)
+Tries to use Elixir v1.0.4 by default.
+* So, clearly, more work to do
+** Travis CI, take 2
+~.travis.yml~
+#+BEGIN_SRC yaml
+  language: elixir
+  elixir:
+    - 1.4 # your version here
+#+END_SRC
+#+ATTR_REVEAL: :frag (roll-in)
+[[file:../images/ci_presentation/travis_min_success.png]]
+** CircleCI, take 2
+No native support in CircleCI today. 
+#+ATTR_REVEAL: :frag (roll-in roll-in)
+Use a version manager (e.g. [[https://github.com/asdf-vm/asdf][asdf]]) to install Erlang and Elixir.
+#+ATTR_REVEAL: :frag (roll-in)
+Manually trigger the build by telling CircleCI what commands to run.
+*** circle.yml
+#+BEGIN_SRC yaml
+  machine:
+    environment:
+      PATH: "$HOME/.asdf/bin:$HOME/.asdf/shims:$PATH"
+  dependencies:
+    cache_directories:
+      - ~/.asdf
+    pre:
+      - if ! asdf | grep version; then git clone https://github.com/HashNuke/asdf.git ~/.asdf; fi
+      - if ! asdf plugin-list | grep erlang; then asdf plugin-add erlang https://github.com/HashNuke/asdf-erlang.git; fi
+      - if ! asdf plugin-list | grep elixir; then asdf plugin-add elixir https://github.com/HashNuke/asdf-elixir.git; fi
+      - erlang_version=$(awk '/erlang/ { print $2 }' .tool-versions) && asdf install erlang ${erlang_version}
+      - elixir_version=$(awk '/elixir/ { print $2 }' .tool-versions) && asdf install elixir ${elixir_version}
+      - yes | mix deps.get
+      - yes | mix local.rebar
+  test:
+    override:
+      - mix test
+#+END_SRC
+#+BEGIN_SRC sh
+  erlang 19.2
+  elixir 1.4.1
+#+END_SRC
+*** circle.yml v.2
+Works with the CircleCI 2.0 beta currently:
+#+BEGIN_SRC yaml
+  version: 2
+  jobs:
+    build:
+      working_directory: ~/ci_demo
+      docker:
+        - image: trenpixster/elixir:1.4.1
+      steps:
+        - checkout
+        - run: mix deps.get
+        - run: mix test
+#+END_SRC
+* References
++ CI/CD image :: https://bluecanvas.io/continuous-integration-salesforce.html
++ xkcd - compiling :: https://xkcd.com/303/
++ CircleCI docs :: https://circleci.com/docs/1.0/
++ Travis CI docs :: https://docs.travis-ci.com/
