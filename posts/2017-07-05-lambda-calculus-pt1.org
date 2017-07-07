@@ -1,0 +1,256 @@
+---
+title: Exploring Lambda Calculus, Part 1
+tags: lambda calculus, functional programming, elixir, haskell, python
+---
+
+* Motivation
+I've been reading through Greg Michaelson's /An Introduction to Functional Programming Through Lambda Calculus/ [fn:1] off and on for the better part of a year now. Prior to starting the book, I'd picked up pieces of lambda calculus ad hoc, but I wanted to really take a step back and learn about lambda calculus from first principles.  
+
+This post, and a few to come, are from notes and examples put together while reading the book. To help synthesize the concepts and make them easier to understand, I've written the examples using lambda calculus syntax along with translations to Elixir, Haskell, and Python. This in the hope that seeing the ideas in a few familiar languages should help make them easier to follow and understand.
+
+*Note*: the contents of the post are fairly terse and example driven. For more detailed information and background, there are a lot of great references including Michaelson, The Haskell Book[fn:2], and Wikipedia[fn:3] 
+
+* Introduction to λ Calculus
+Lambda (λ) calculus was [[https://youtu.be/IOiZatlZtGU?t=472][discovered]] by Alonzo Church in 1936. It is a universal model of computation that is equivalent to the Turing machine and Gödel's general recursive functions (the Church-Turing Thesis).
+
+** λ Expressions
+#+BEGIN_QUOTE
+The λ calculus is a system for manipulating λ expressions. -- /Michaelson 2011, p. 21/
+#+END_QUOTE
+
+A λ expression can be either a *name*, *function*, or *function application*.
+*** Names
+A name is used to refer to a λ expression.
+*** Functions
+A function is an abstraction over a λ expression that takes the form:
+#+BEGIN_SRC latex
+fn := λ<name>.<body>
+#+END_SRC
+*** Function application
+Function application is the application of one lambda expression, ~fn~, on a second, ~arg~.
+#+BEGIN_SRC latex
+  application := (fn arg)
+#+END_SRC
+** First Example Expressions
+For each example, I'll give the λ expression along with examples in Elixir, Haskell, and Python to help explain/build an intuition for what is happening and explore how various programming languages handle anonymous functions.
+
+*** Identity 
+The simplest function we can look at is the identity function:
+#+BEGIN_SRC latex
+λx.x
+#+END_SRC
+
+#+BEGIN_SRC elixir
+fn x -> x end         #  Elixir
+#+END_SRC
+
+#+BEGIN_SRC haskell
+\x -> x              -- Haskell
+#+END_SRC
+
+#+BEGIN_SRC python
+lambda x: x           #  Python
+#+END_SRC
+
+Applying the function to an argument returns the argument:
+
+#+BEGIN_SRC latex
+(λx.x 5)
+5
+#+END_SRC
+
+#+BEGIN_SRC elixir
+(fn x -> x end).(5)   #  Elixir
+5
+#+END_SRC
+
+#+BEGIN_SRC haskell
+(\x -> x) 5           -- Haskell
+5
+#+END_SRC
+
+#+BEGIN_SRC python
+(lambda x: x)(5)      #  Python
+5
+#+END_SRC
+
+*** Aside - Naming expressions
+We can name expressions to make it easier to refer to them in other expressions. I'll use ~<name> := <expression>~ to name expressions in λ calculus. For Elixir, Haskell, and Python, I'll use language appropriate assignment.
+
+We can name ~identity~  as follows:
+
+#+BEGIN_SRC latex
+  identity := λx.x
+#+END_SRC
+
+#+BEGIN_SRC elixir :session elixir
+  identity = fn x -> x end
+#+END_SRC
+
+#+BEGIN_SRC haskell :session haskell
+  let identity = \x -> x
+#+END_SRC
+
+#+BEGIN_SRC python :session python
+  identity = lambda x: x
+#+END_SRC
+
+I'll name expressions the first time they appear in the following examples to make it easier to reuse them in the future
+
+*** Self-application
+
+The self-application function is a function that calls itself with itself as the argument:
+
+#+BEGIN_SRC latex
+self_apply := λs.(s s)
+#+END_SRC
+
+#+BEGIN_SRC elixir :session elixir
+self_apply = fn s -> s.(s) end      #  Elixir
+#+END_SRC
+
+#+BEGIN_SRC haskell :session haskell
+let self_apply = \s -> (s s)        -- Haskell
+#+END_SRC
+
+#+BEGIN_SRC python :session python
+self_apply = lambda s: s(s)         #  Python
+#+END_SRC
+
+Applying the self-application function to the identity function results in the identity function:
+
+#+BEGIN_SRC latex
+(λs.(s s) λx.x)
+(λx.x λx.x)
+λx.x
+#+END_SRC
+
+#+BEGIN_SRC elixir
+#  Elixir
+(fn s -> s.(s) end).(fn x -> x end)
+(fn x -> x end).(fn x -> x end)
+fn x -> x end
+#+END_SRC
+
+#+BEGIN_SRC haskell
+-- Haskell
+(\s -> (s s)) (\x -> x)
+(\x -> x) (\x -> x)
+\x -> x
+#+END_SRC
+
+#+BEGIN_SRC python
+#  Python
+(lambda s: s(s))(lambda x: x)
+(lambda x: x)(lambda x: x)
+lambda x: x
+#+END_SRC
+
+Applying the self-application function to itself causes an infinite loop of self-application -- the first step towards building recursive functions:
+
+#+BEGIN_SRC latex
+(λs.(s s) λs.(s s))
+(λs.(s s) λs.(s s))
+.
+.
+.
+#+END_SRC
+
+The argument, =λs.(s s)= is bound in the function =λs.(s s)=, where it replaces the bound variable, /s/, in the function application =(s s)=.
+
+*** Apply
+
+Apply binds a function, /f/, to an expression that binds an argument, /arg/, in an application of /f/ to /arg/. 
+
+#+BEGIN_SRC latex
+  apply := λf.λarg.(f arg)
+#+END_SRC
+
+#+BEGIN_SRC elixir :session elixir
+  apply = fn f -> fn arg -> f.(arg) end end
+#+END_SRC
+
+#+BEGIN_SRC haskell :session haskell
+  let apply = \f -> \arg -> f arg
+#+END_SRC
+
+#+BEGIN_SRC python :session python
+  apply = lambda f: lambda arg: f(arg)
+#+END_SRC
+
+Applying identity to identity results in the identity function:
+
+#+BEGIN_SRC latex
+  (apply identity identity) =>
+  ((λf.λarg.(f arg) λx.x) λx.x) =>
+  (λarg.(λx.x arg) λx.x) =>
+  (λx.x λx.x) =>
+  λx.x
+#+END_SRC
+
+*** First and Second
+
+We can construct expressions that take two arguments and return either the first or second:
+
+#+BEGIN_SRC latex
+first  := λfirst.λsecond.first       # First
+second := λfirst.λsecond.second      # Second
+#+END_SRC
+
+#+BEGIN_SRC elixir :session elixir
+# Elixir
+first  = fn first -> fn second -> first end end
+second = fn first -> fn second -> second end end
+#+END_SRC
+
+#+BEGIN_SRC haskell :session haskell
+-- Haskell
+let first  = \first -> \second -> first
+let second = \first -> \second -> second
+#+END_SRC
+
+#+BEGIN_SRC python :session python
+#  Python
+first  = lambda first: lambda second: first
+second = lambda first: lambda second: second
+#+END_SRC
+
+*** Make Pair
+We can construct functions that take multiple arguments (/n/) by first building expressions that have /n/ + 1 arguments:
+1. A function /f/ takes an argument /x/ and binds /x/ in another function, /g/
+2. /g/ takes an argument /y/ and binds /y/ in a function /h/ that takes a function as an argument, /z/
+3. /z/ is applied to /x/ and the result of /(z x)/ is applied to /y/
+4. This effectively results in /z(x, y)/
+
+#+BEGIN_SRC latex
+  make_pair := λx.λy.λz.((z x) y)
+#+END_SRC
+
+#+BEGIN_SRC elixir :session elixirλ
+  # Elixir
+  make_pair = fn x -> fn y -> fn z -> z.(x).(y) end end end
+#+END_SRC
+
+#+BEGIN_SRC haskell :session haskell
+  -- Haskell
+  let make_pair = \x -> \y -> \z -> z x y
+  -- ap (1) (2) (\x y -> x > y)
+#+END_SRC
+
+#+BEGIN_SRC python :session python
+  #  Python
+  make_pair = lambda x: lambda y: lambda z: z(x)(y)
+#+END_SRC
+
+* What's next?
+This post introduced the some basics of lambda calculus by example. We looked at the three types of lambda expressions: names, functions, and function application. We also started building and evaluating lambda expressions with additional examples using Elixir, Haskell, and Python.
+
+The next post will cover free and bound variables, formal rules behind evaluating lambda expressions, and conditional logic in lambda calculus.
+* Footnotes
+
+[fn:3] Lambda calculus - https://en.wikipedia.org/wiki/Lambda_calculus
+
+[fn:1] Michaelson, Greg. /An Introduction to Functional Programming Through Lambda Calculus/. Dover, 2011.
+[fn:2] Allen and Moronuki, [[haskellbook.com][Haskell Programming from first principles]]
+
+

@@ -76,14 +76,14 @@ install:
   - if [ -f configure.ac ]; then autoreconf -i; fi
   - |
     set -ex
-      stack build
+      stack build -j1
       stack exec site clean
       stack exec site build
     set +ex
 script:
 - |
   set -ex
-    stack build
+    stack build -j1
     stack exec site clean
     stack exec site build
   set +ex
