@@ -1,12 +1,12 @@
 ---
 title: Exploring Lambda Calculus, Part 1
-tags: lambda calculus, functional programming
+tags: lambda calculus, functional programming, elixir, haskell, python
 ---
 
 * Motivation
-I've been reading through Greg Michaelson's /An Introduction to Functional Programming Through Lambda Calculus/ [fn:1] off and on for the better part of a year now. Prior to starting the book, I'd picked up pieces of lambda calculus, but I wanted to really take a step back and learn about lambda calculus from first principles.  
+I've been reading through Greg Michaelson's /An Introduction to Functional Programming Through Lambda Calculus/ [fn:1] off and on for the better part of a year now. Prior to starting the book, I'd picked up pieces of lambda calculus ad hoc, but I wanted to really take a step back and learn about lambda calculus from first principles.  
 
-This post, and a few to come, are from notes I took and examples I wrote while reading the book. I've written the examples using lambda calculus syntax along with translations to Elixir, Haskell, and Python; the idea being that synthesizing the ideas using a few familiar languages should help make the ideas easier to understand.
+This post, and a few to come, are from notes and examples put together while reading the book. To help synthesize the concepts and make them easier to understand, I've written the examples using lambda calculus syntax along with translations to Elixir, Haskell, and Python. This in the hope that seeing the ideas in a few familiar languages should help make them easier to follow and understand.
 
 *Note*: the contents of the post are fairly terse and example driven. For more detailed information and background, there are a lot of great references including Michaelson, The Haskell Book[fn:2], and Wikipedia[fn:3] 
 
