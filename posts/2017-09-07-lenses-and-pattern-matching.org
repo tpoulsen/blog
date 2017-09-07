@@ -4,7 +4,7 @@ tags: functional programming, elixir, lenses
 ---
 * Background
 
-I received a question on focus' GitHub page asking about [[https://github.com/tpoulsen/focus/issues/18#issue-242386132][convention around pattern matching and lenses]]. In an attempt to answer the question, this post touches on some differences between lenses and pattern matching, gives examples of how to perform operations with and without lenses, and demonstrates how lenses can make working with nested data structures easier.
+I received a question on focus' GitHub page asking about [[https://github.com/tpoulsen/focus/issues/18#issue-242386132][convention around pattern matching and lenses]]. In an attempt to answer the question, this post touches on some differences between lenses and pattern matching, gives examples of how to perform operations with and without lenses, and demonstrates how lenses can make working with nested data structures easier[fn:2].
 
 * Setup
 
@@ -218,6 +218,8 @@ I think of pattern-matching in the context of function definitions and expressio
 Lenses are more analogous to property accessors in languages with mutable records/classes/objects. They package up a way to get and set values inside of data structures in a single 'object' that can be reused and composed with other lenses. 
 
 * Footnotes
+
+[fn:2] This post doesn't discuss =get_in/2=, =put_in/2=, or =update_in/2=. These src_elixir{Kernel} functions are the most analogous to lens functionality.
 
 [fn:5] 
 Alternatively, we could use a series of src_elixir{case} statements or (preferably) a src_elixir{with} to get to the city:
