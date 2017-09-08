@@ -1,0 +1,263 @@
+---
+title: Lenses and Pattern Matching
+tags: functional programming, elixir, lenses
+---
+* Background
+
+I received a question on focus' GitHub page asking about [[https://github.com/tpoulsen/focus/issues/18#issue-242386132][convention around pattern matching and lenses]]. In an attempt to answer the question, this post touches on some differences between lenses and pattern matching, gives examples of how to perform operations with and without lenses, and demonstrates how lenses can make working with nested data structures easier[fn:2].
+
+* Setup
+
+For the remainder of the post, we'll be looking at this nested map:
+#+BEGIN_SRC elixir
+person = %{
+  name: "Homer",
+  address: %{
+    locale: %{
+      number: 742,
+      street: "Evergreen Terrace",
+      city: "Springfield",
+    },
+    state: "???"
+  }
+}
+#+END_SRC
+We'll walk through viewing and updating pieces of data inside the map without getting or changing the rest of it.
+
+
+* Viewing data
+
+In order to view the city, we could write a function to pattern match into the map and return the city name[fn:5]:
+#+BEGIN_SRC elixir
+def city_name(%{address: %{locale: %{city: city_name}}}), do: city_name
+def city_name(_), do: {:error, :not_found}
+
+city_name(person)
+# "Springfield"
+#+END_SRC
+
+
+To view the city name with lenses[fn:1], we would:
++ Define lenses to access individual pieces of the map (by key)
++ Compose the individual lenses into a single one that can access the city
++ Use the composed lens to view the data inside the map
+#+BEGIN_SRC elixir
+address = Lens.make_lens(:address)
+locale =  Lens.make_lens(:locale)
+city =    Lens.make_lens(:city)
+
+address
+~> locale
+~> city
+|> Focus.view(person)
+# "Springfield"
+#+END_SRC
+
+If we wanted to get the street instead of the city, we would have to define new functions that look very similar to those we just defined:
+#+BEGIN_SRC elixir
+  def street_name(%{address: %{locale: %{street: street_name}}}), do: street_name
+  def street_name(_), do: {:error, :not_found}
+
+  street_name(person)
+  # "Evergreen Terrace"
+#+END_SRC
+
+** Modularity
+A better approach then might be to define several smaller functions that gradually access the data in the map. This way we're able to better reuse functions we've already defined:
+#+BEGIN_SRC elixir
+  def address(%{address: address}), do: address
+  def address(_), do: {:error, :not_found}
+
+  def locale(%{locale: locale}), do: locale
+  def locale(_), do: {:error, :not_found}
+
+  def city(%{city: city}), do: city
+  def city(_), do: {:error, :not_found}
+
+  def street(%{street: street}), do: street
+  def street(_), do: {:error, :not_found}
+
+  person
+  |> address()
+  |> locale()
+  |> city()
+  # "Springfield"
+
+
+  person
+  |> address()
+  |> locale()
+  |> street()
+  # "Evergreen Terrace"
+#+END_SRC
+
+Modularity and reuse is trivial with lenses. 
+We can easily reuse the lenses we defined previously, create a new one for the new thing we want to access, and compose them:
+#+BEGIN_SRC elixir
+street =  Lens.make_lens(:street)
+
+address
+~> locale
+~> street
+|> Focus.view(person)
+# "Evergreen Terrace"
+#+END_SRC
+
+And this is the real benefit that I see with lenses: being able to compose individual pieces in as many ways as you want to get at different values in a data structure.
+
+* Setting/Updating data
+The power of lenses becomes more pronounced when modifying values inside of data structures.
+
+To update the street in our =person= map, we could write a series of functions:
+#+BEGIN_SRC elixir
+  # Previously defined view functions
+  def address(%{address: address}), do: address
+  def address(_), do: {:error, :not_found}
+
+  def locale(%{locale: locale}), do: locale
+  def locale(_), do: {:error, :not_found}
+
+  def city(%{city: city}), do: city
+  def city(_), do: {:error, :not_found}
+
+  def street(%{street: street}), do: street
+  def street(_), do: {:error, :not_found}
+
+  # Update functions
+  def update_address(%{address: address} = person, new_address) do
+    %{person | address: new_address}
+  end
+
+  def update_locale(%{locale: locale} = address, new_locale) do
+    %{address | locale: new_locale}
+  end
+
+  def update_street(%{street: street} = locale, new_street) do
+    %{locale | street: new_street}
+  end
+#+END_SRC
+
+We'd then be able to use these to make updates to our overall map[fn:3]:
+#+BEGIN_SRC elixir
+  updated_street = person
+  |> address
+  |> locale
+  |> update_street("Fake St.")
+
+  updated_locale = person
+  |> address()
+  |> update_locale(new_street)
+
+  person
+  |> update_address(updated_address)
+  # person = %{
+  #   name: "Homer",
+  #   address: %{
+  #     locale: %{
+  #       number: 742,
+  #       street: "Fake Street",
+  #       city: "Springfield",
+  #     },
+  #     state: "???"
+  #   }
+  # }
+#+END_SRC
+
+** With lenses
+To do the same update with lenses:
+#+BEGIN_SRC elixir
+# The lenses we previously defined
+address = Lens.make_lens(:address)
+locale =  Lens.make_lens(:locale)
+street =  Lens.make_lens(:street)
+
+# Updating the street name:
+address
+~> locale
+~> street
+|> Focus.set(person, "Fake Street")
+# person = %{
+#   name: "Homer",
+#   address: %{
+#     locale: %{
+#       number: 742,
+#       street: "Fake Street",
+#       city: "Springfield",
+#     },
+#     state: "???"
+#   }
+# }
+#+END_SRC
+Lenses abstract away the details of updating specific pieces inside of a nested data structure without modifying the rest.
+
+We're also able to use lenses to apply functions to data inside a data structure[fn:4]:
+#+BEGIN_SRC elixir
+  # Updating the street name:
+  address
+  ~> locale
+  ~> street
+  |> Focus.over(person, &String.upcase/1)
+  # person = %{
+  #   name: "Homer",
+  #   address: %{
+  #     locale: %{
+  #       number: 742,
+  #       street: "EVERGREEN TERRACE"
+  #       city: "Springfield",
+  #     },
+  #     state: "???"
+  #   }
+  # }
+#+END_SRC
+
+* Conclusion
+Ultimately, lenses and pattern-matching serve fundamentally different purposes.
+
+I think of pattern-matching in the context of function definitions and expression evaluation as ways to handle different cases of inputs and results respectively.
+
+Lenses are more analogous to property accessors in languages with mutable records/classes/objects. They package up a way to get and set values inside of data structures in a single 'object' that can be reused and composed with other lenses. 
+
+* Footnotes
+
+[fn:2] This post doesn't discuss =get_in/2=, =put_in/2=, or =update_in/2=. These src_elixir{Kernel} functions are the most analogous to lens functionality.
+
+[fn:5] 
+Alternatively, we could use a series of src_elixir{case} statements or (preferably) a src_elixir{with} to get to the city:
+#+BEGIN_SRC elixir
+  # Using a series of case statements
+  def city_name(person) do
+    case Map.get(person, :address) do
+      nil ->
+        {:error, {:not_found}}
+      address ->
+        case Map.get(address, :city) do
+          nil ->
+            {:error, {:not_found}}
+          city ->
+            city
+        end
+    end
+  end
+
+  city_name(person)
+  # "Springfield"
+
+  # Using a with
+  def city_name(person) do
+    with address <- Map.get(person, :address),
+         city <- Map.get(address, :city) do
+      city
+    else
+      nil -> {:error, :not_found}
+    end
+  end
+
+  city_name(person)
+  # "Springfield"
+#+END_SRC
+
+[fn:4] Doing the equivalent without lenses is left as an exercise.
+
+[fn:3] Using a few temporary assignments along the way helps with readability here. 
+
+[fn:1] All lens syntax here is focus specific, but the concepts are general.
