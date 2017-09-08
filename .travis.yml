@@ -80,12 +80,12 @@ install:
       stack exec site clean
       stack exec site build
     set +ex
-script:
-- |
-  set -ex
-    stack build -j1
-    stack exec site clean
-    stack exec site build
-  set +ex
+#script:
+#- |
+  #set -ex
+    #stack build -j1
+    #stack exec site clean
+    #stack exec site build
+  #set +ex
 after_success:
   - bash _scripts/deploy.sh
